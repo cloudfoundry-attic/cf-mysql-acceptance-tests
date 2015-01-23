@@ -19,16 +19,22 @@ type Plan struct {
 	MaxUserConnections int    `json:"max_user_connections"`
 }
 
+type ProxyDashboard struct {
+	Domain   string `json:"domain"`
+	Password string `json:"password"`
+}
+
 type MysqlIntegrationConfig struct {
 	IntegrationConfig
-	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
-	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
-	IncludeFailoverTests  bool        `json:"include_failover_tests"`
-	BrokerHost            string      `json:"broker_host"`
-	ServiceName           string      `json:"service_name"`
-	Plans                 []Plan      `json:"plans"`
-	Brokers               []Component `json:"brokers"`
-	MysqlNodes            []Component `json:"mysql_nodes"`
+	SmokeTestsOnly        bool           `json:"smoke_tests_only"`
+	IncludeDashboardTests bool           `json:"include_dashboard_tests"`
+	IncludeFailoverTests  bool           `json:"include_failover_tests"`
+	BrokerHost            string         `json:"broker_host"`
+	ServiceName           string         `json:"service_name"`
+	Plans                 []Plan         `json:"plans"`
+	Brokers               []Component    `json:"brokers"`
+	MysqlNodes            []Component    `json:"mysql_nodes"`
+	Proxy                 ProxyDashboard `json:"proxy"`
 }
 
 func LoadConfig() (config MysqlIntegrationConfig) {
@@ -93,5 +99,19 @@ func LoadPath(path string) (config MysqlIntegrationConfig) {
 	if config.TimeoutScale <= 0 {
 		config.TimeoutScale = 1
 	}
+
+	emptyProxyDashboard := ProxyDashboard{}
+	if config.Proxy == emptyProxyDashboard {
+		panic("missing configuration 'proxy'")
+	}
+
+	if config.Proxy.Domain == "" {
+		panic("missing configuration 'proxy.domain'")
+	}
+
+	if config.Proxy.Password == "" {
+		panic("missing configuration 'proxy.password'")
+	}
+
 	return
 }

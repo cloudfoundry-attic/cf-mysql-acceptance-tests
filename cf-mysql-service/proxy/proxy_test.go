@@ -11,7 +11,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 	var url string
 
 	BeforeEach(func() {
-		url = "http://haproxy-0.p-mysql." + IntegrationConfig.AppsDomain
+		url = "http://haproxy-0.p-mysql." + IntegrationConfig.Proxy.Domain
 	})
 
 	It("prompts for Basic Auth creds when they aren't provided", func() {
@@ -32,7 +32,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 
 	It("accepts valid Basic Auth creds", func() {
 		req, err := http.NewRequest("GET", url, nil)
-		req.SetBasicAuth("admin", "password")
+		req.SetBasicAuth("admin", IntegrationConfig.Proxy.Password)
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		Expect(err).NotTo(HaveOccurred())
