@@ -1,30 +1,41 @@
 package proxy_test
 
 import (
+	"net/http"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gbytes"
-
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 )
 
 var _ = Describe("P-MySQL Proxy", func() {
+	var url string
 
-	It("rejects connections without credentials", func() {
-		uri := "http://haproxy-0.p-mysql." + IntegrationConfig.AppsDomain
-
-		Eventually(Curl(uri)).Should(Say("Unauthorized"))
+	BeforeEach(func() {
+		url = "http://haproxy-0.p-mysql." + IntegrationConfig.AppsDomain
 	})
 
-	It("rejects connections with incorrect credentials", func() {
-		uri := "http://fakeuser:fakepassword@haproxy-0.p-mysql." + IntegrationConfig.AppsDomain
-
-		Eventually(Curl(uri)).Should(Say("Unauthorized"))
+	It("prompts for Basic Auth creds when they aren't provided", func() {
+		resp, err := http.Get(url)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
 	})
 
-	It("allows connections with correct credentials", func() {
-		uri := "http://admin:password@haproxy-0.p-mysql." + IntegrationConfig.AppsDomain
+	It("does not accept bad Basic Auth creds", func() {
+		req, err := http.NewRequest("GET", url, nil)
+		req.SetBasicAuth("bad_username", "bad_password")
+		client := &http.Client{}
+		resp, err := client.Do(req)
 
-		Eventually(Curl(uri)).Should(Say("Statistics Report for HAProxy"))
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	})
+
+	It("accepts valid Basic Auth creds", func() {
+		req, err := http.NewRequest("GET", url, nil)
+		req.SetBasicAuth("admin", "password")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		Expect(err).NotTo(HaveOccurred())
+		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
 })
