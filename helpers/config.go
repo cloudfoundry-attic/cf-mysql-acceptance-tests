@@ -19,22 +19,23 @@ type Plan struct {
 	MaxUserConnections int    `json:"max_user_connections"`
 }
 
-type ProxyDashboard struct {
-	Domain   string `json:"domain"`
-	Password string `json:"password"`
+type Proxy struct {
+	ExternalHost string `json:"external_host"`
+	APIUsername  string `json:"api_username"`
+	APIPassword  string `json:"api_password"`
 }
 
 type MysqlIntegrationConfig struct {
 	IntegrationConfig
-	SmokeTestsOnly        bool           `json:"smoke_tests_only"`
-	IncludeDashboardTests bool           `json:"include_dashboard_tests"`
-	IncludeFailoverTests  bool           `json:"include_failover_tests"`
-	BrokerHost            string         `json:"broker_host"`
-	ServiceName           string         `json:"service_name"`
-	Plans                 []Plan         `json:"plans"`
-	Brokers               []Component    `json:"brokers"`
-	MysqlNodes            []Component    `json:"mysql_nodes"`
-	Proxy                 ProxyDashboard `json:"proxy"`
+	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
+	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
+	IncludeFailoverTests  bool        `json:"include_failover_tests"`
+	BrokerHost            string      `json:"broker_host"`
+	ServiceName           string      `json:"service_name"`
+	Plans                 []Plan      `json:"plans"`
+	Brokers               []Component `json:"brokers"`
+	MysqlNodes            []Component `json:"mysql_nodes"`
+	Proxy                 Proxy       `json:"proxy"`
 }
 
 func LoadConfig() (config MysqlIntegrationConfig) {
@@ -100,17 +101,21 @@ func LoadPath(path string) (config MysqlIntegrationConfig) {
 		config.TimeoutScale = 1
 	}
 
-	emptyProxyDashboard := ProxyDashboard{}
-	if config.Proxy == emptyProxyDashboard {
+	emptyProxy := Proxy{}
+	if config.Proxy == emptyProxy {
 		panic("missing configuration 'proxy'")
 	}
 
-	if config.Proxy.Domain == "" {
-		panic("missing configuration 'proxy.domain'")
+	if config.Proxy.ExternalHost == "" {
+		panic("missing configuration 'proxy.external_host'")
 	}
 
-	if config.Proxy.Password == "" {
-		panic("missing configuration 'proxy.password'")
+	if config.Proxy.APIUsername == "" {
+		panic("missing configuration 'proxy.api_username'")
+	}
+
+	if config.Proxy.APIPassword == "" {
+		panic("missing configuration 'proxy.api_password'")
 	}
 
 	return

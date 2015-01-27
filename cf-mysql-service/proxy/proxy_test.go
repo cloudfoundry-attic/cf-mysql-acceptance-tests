@@ -1,6 +1,7 @@
 package proxy_test
 
 import (
+	"fmt"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -11,7 +12,10 @@ var _ = Describe("P-MySQL Proxy", func() {
 	var url string
 
 	BeforeEach(func() {
-		url = "http://haproxy-0.p-mysql." + IntegrationConfig.Proxy.Domain
+		url = fmt.Sprintf(
+			"http://proxy-0.%s/v0/backends",
+			IntegrationConfig.Proxy.ExternalHost,
+		)
 	})
 
 	It("prompts for Basic Auth creds when they aren't provided", func() {
@@ -32,7 +36,10 @@ var _ = Describe("P-MySQL Proxy", func() {
 
 	It("accepts valid Basic Auth creds", func() {
 		req, err := http.NewRequest("GET", url, nil)
-		req.SetBasicAuth("admin", IntegrationConfig.Proxy.Password)
+		req.SetBasicAuth(
+			IntegrationConfig.Proxy.APIUsername,
+			IntegrationConfig.Proxy.APIPassword,
+		)
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		Expect(err).NotTo(HaveOccurred())
