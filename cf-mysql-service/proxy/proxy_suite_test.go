@@ -11,7 +11,7 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 
-	helpers "../../helpers"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 var IntegrationConfig = helpers.LoadConfig()

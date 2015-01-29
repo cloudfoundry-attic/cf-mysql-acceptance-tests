@@ -1,8 +1,9 @@
 package dashboard_test
 
 import (
-	"../../helpers"
 	"testing"
+
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 var IntegrationConfig = helpers.LoadConfig()

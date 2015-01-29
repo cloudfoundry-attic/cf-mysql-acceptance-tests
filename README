@@ -6,9 +6,6 @@ Updating Dependencies
     - See https://github.com/cloudfoundry/cli/releases
     - Name must be cf
 
-- Go Libraries
+- Go Dependencies
+    - These are provided as submodules of cf-mysql-release
 
-    - These tests use gocart to manage dependencies.
-    - Update the Cartridge files by following the instructions at https://github.com/vito/gocart.
-    - Vendor the dependencies by running bin/vendor_deps
-    - Commit the vendored dependencies

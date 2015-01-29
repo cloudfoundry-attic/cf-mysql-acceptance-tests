@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"
 
-	"../../helpers"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 )
 

@@ -15,7 +15,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
-	"../../partition"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
 
 	context_setup "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 )
