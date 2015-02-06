@@ -100,7 +100,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Scenario("write/read data before the partition and successfully writes and read it after", func() {
-			planName := "100mb-dev"
+			planName := "100mb"
 			serviceInstanceName := generator.RandomName()
 			instanceURI := AppUri(appName) + "/service/mysql/" + serviceInstanceName
 
