@@ -11,7 +11,7 @@ Install the app by pushing it to your Cloud Foundry and binding with the Riak CS
 Example:
 
     $ cf push mysqltest --no-start
-    $ cf create-service p-mysql 100mb-dev mydb
+    $ cf create-service p-mysql 100mb mydb
     $ cf bind-service mysqltest mydb
     $ cf restart mysqltest
 

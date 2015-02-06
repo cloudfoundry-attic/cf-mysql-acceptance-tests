@@ -25,7 +25,7 @@ const (
 	firstValue  = "myvalue"
 	secondKey   = "mysecondkey"
 	secondValue = "mysecondvalue"
-	planName    = "100mb-dev"
+	planName    = "100mb"
 
 	sinatraPath = "../../assets/sinatra_app"
 )
