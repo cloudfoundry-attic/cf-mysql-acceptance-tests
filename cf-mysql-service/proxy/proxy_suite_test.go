@@ -1,28 +1,13 @@
 package proxy_test
 
 import (
-	"fmt"
 	"testing"
-	"time"
-
-	"github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
-	. "github.com/onsi/ginkgo"
-	ginkgoconfig "github.com/onsi/ginkgo/config"
-	"github.com/onsi/ginkgo/reporters"
-	. "github.com/onsi/gomega"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
-var IntegrationConfig = helpers.LoadConfig()
+var integrationConfig = helpers.LoadConfig()
 
 func TestService(t *testing.T) {
-	RegisterFailHandler(Fail)
-	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))
-	RunSpecsWithDefaultAndCustomReporters(t, fmt.Sprintf("P-MySQL Acceptance Tests -- %s", "Proxy"), []Reporter{junitReporter})
+	helpers.PrepareAndRunTests("Proxy", &integrationConfig, t)
 }
-
-var _ = BeforeSuite(func() {
-	context_setup.TimeoutScale = IntegrationConfig.TimeoutScale
-	SetDefaultEventuallyTimeout(context_setup.ScaledTimeout(10 * time.Second))
-})

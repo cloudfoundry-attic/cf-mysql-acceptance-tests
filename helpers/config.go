@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 )
@@ -36,6 +37,14 @@ type MysqlIntegrationConfig struct {
 	Brokers               []Component `json:"brokers"`
 	MysqlNodes            []Component `json:"mysql_nodes"`
 	Proxy                 Proxy       `json:"proxy"`
+}
+
+func (m MysqlIntegrationConfig) ShortTimeout() time.Duration {
+	return ScaledTimeout(1 * time.Minute)
+}
+
+func (m MysqlIntegrationConfig) LongTimeout() time.Duration {
+	return ScaledTimeout(5 * time.Minute)
 }
 
 func LoadConfig() (config MysqlIntegrationConfig) {

@@ -2,12 +2,10 @@ package failover_test
 
 import (
 	"fmt"
-	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
-	. "github.com/onsi/gomega/gexec"
 	. "github.com/sclevine/agouti/dsl"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
@@ -16,8 +14,6 @@ import (
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
-
-	context_setup "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 )
 
 const (
@@ -31,66 +27,49 @@ const (
 )
 
 var appName string
-var minuteTimeout, curlTimeout, retryInterval time.Duration
 
 func createAndBindService(serviceName, serviceInstanceName, planName string) {
-	minuteTimeout := context_setup.ScaledTimeout(60 * time.Second)
-	retryInterval := 10 * time.Second
-	fmt.Print()
-	Eventually(func() *Session {
-		session := Cf("create-service", serviceName, planName, serviceInstanceName)
-		session.Wait(minuteTimeout)
-		return session
-	}, minuteTimeout*3, retryInterval).Should(Exit(0))
+	By("Creating service instance")
+	ExecWithTimeout(Cf("create-service", serviceName, planName, serviceInstanceName), integrationConfig.LongTimeout())
 
-	Eventually(func() *Session {
-		session := Cf("bind-service", appName, serviceInstanceName)
-		session.Wait(minuteTimeout)
-		return session
-	}, minuteTimeout*3, retryInterval).Should(Exit(0))
+	By("Binding app to service instance")
+	ExecWithTimeout(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
 
-	Eventually(func() *Session {
-		session := Cf("restart", appName)
-		session.Wait(minuteTimeout)
-		return session
-	}, minuteTimeout*3, minuteTimeout/2).Should(Exit(0))
+	By("Restarting app")
+	ExecWithTimeout(Cf("restart", appName), integrationConfig.LongTimeout())
 }
 
 func assertAppIsRunning(appName string) {
-	pingUri := AppUri(appName) + "/ping"
-	Eventually(Curl(pingUri), curlTimeout, retryInterval).Should(Say("OK"))
+	pingURI := appUri(appName) + "/ping"
+	curlCmd := ExecWithTimeout(Curl(pingURI), integrationConfig.ShortTimeout())
+	Expect(curlCmd).Should(Say("OK"))
 }
 
 func assertWriteToDB(key, value, uri string) {
-	writeTimeout := context_setup.ScaledTimeout(60*time.Second) * 5
-	retryInterval := 10 * time.Second
-	curlURI := uri + "/" + key
-	Eventually(Curl("-d", value, curlURI), writeTimeout, retryInterval).Should(Say(value))
+	curlURI := fmt.Sprintf("%s/%s", uri, key)
+	curlCmd := ExecWithTimeout(Curl("-d", value, curlURI), integrationConfig.ShortTimeout())
+	Expect(curlCmd).Should(Say(value))
 }
 
 func assertReadFromDB(key, value, uri string) {
-	readTimeout := context_setup.ScaledTimeout(60*time.Second) * 2
-	retryInterval := 10 * time.Second
-	curlURI := uri + "/" + key
-	Eventually(Curl(curlURI), readTimeout, retryInterval).Should(Say(value))
+	curlURI := fmt.Sprintf("%s/%s", uri, key)
+	curlCmd := ExecWithTimeout(Curl(curlURI), integrationConfig.ShortTimeout())
+	Expect(curlCmd).Should(Say(value))
 }
 
 var _ = Feature("CF MySQL Failover", func() {
 	BeforeEach(func() {
 		appName = generator.RandomName()
-		minuteTimeout = context_setup.ScaledTimeout(60 * time.Second)
-		curlTimeout = minuteTimeout * 2
-		retryInterval = 10 * time.Second
 
 		Step("Push an app", func() {
-			Eventually(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), minuteTimeout, retryInterval).Should(Exit(0))
+			ExecWithTimeout(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout())
 		})
 	})
 
 	Context("when the mysql node is partitioned", func() {
 		BeforeEach(func() {
-			Expect(IntegrationConfig.MysqlNodes).NotTo(BeNil())
-			Expect(len(IntegrationConfig.MysqlNodes)).To(BeNumerically(">=", 1))
+			Expect(integrationConfig.MysqlNodes).NotTo(BeNil())
+			Expect(len(integrationConfig.MysqlNodes)).To(BeNumerically(">=", 1))
 		})
 
 		AfterEach(func() {
@@ -102,15 +81,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		Scenario("write/read data before the partition and successfully writes and read it after", func() {
 			planName := "100mb"
 			serviceInstanceName := generator.RandomName()
-			instanceURI := AppUri(appName) + "/service/mysql/" + serviceInstanceName
+			instanceURI := appUri(appName) + "/service/mysql/" + serviceInstanceName
 
 			Step("Create & bind a DB", func() {
-				createAndBindService(IntegrationConfig.ServiceName, serviceInstanceName, planName)
+				createAndBindService(integrationConfig.ServiceName, serviceInstanceName, planName)
 				assertAppIsRunning(appName)
 			})
 
 			Step("Start App", func() {
-				Eventually(Cf("start", appName), minuteTimeout*5).Should(Exit(0))
+				ExecWithTimeout(Cf("start", appName), integrationConfig.LongTimeout())
 				assertAppIsRunning(appName)
 			})
 
@@ -124,25 +103,14 @@ var _ = Feature("CF MySQL Failover", func() {
 
 			Step("Take down mysql node", func() {
 				partition.On(
-					IntegrationConfig.MysqlNodes[0].SshTunnel,
-					IntegrationConfig.MysqlNodes[0].Ip,
+					integrationConfig.MysqlNodes[0].SshTunnel,
+					integrationConfig.MysqlNodes[0].Ip,
 				)
 			})
 
 			Step("Restart sinatra app to reset connections", func() {
 				fmt.Println("Restarting app")
-				session := Cf("restart", appName)
-				timeout := make(chan bool, 1)
-				go func() {
-					time.Sleep(2 * time.Minute)
-					timeout <- true
-				}()
-				select {
-				case <-session.Exited:
-					fmt.Println("App restarted")
-				case <-timeout:
-					fmt.Println("Restart timed out")
-				}
+				ExecWithTimeout(Cf("restart", appName), integrationConfig.LongTimeout())
 				fmt.Println("Checking whether app is running")
 				assertAppIsRunning(appName)
 			})
@@ -162,11 +130,11 @@ var _ = Feature("CF MySQL Failover", func() {
 		var broker0SshTunnel, broker1SshTunnel string
 
 		BeforeEach(func() {
-			Expect(IntegrationConfig.Brokers).NotTo(BeNil())
-			Expect(len(IntegrationConfig.Brokers)).To(BeNumerically(">=", 2))
+			Expect(integrationConfig.Brokers).NotTo(BeNil())
+			Expect(len(integrationConfig.Brokers)).To(BeNumerically(">=", 2))
 
-			broker0SshTunnel = IntegrationConfig.Brokers[0].SshTunnel
-			broker1SshTunnel = IntegrationConfig.Brokers[1].SshTunnel
+			broker0SshTunnel = integrationConfig.Brokers[0].SshTunnel
+			broker1SshTunnel = integrationConfig.Brokers[1].SshTunnel
 		})
 
 		AfterEach(func() {
@@ -176,18 +144,18 @@ var _ = Feature("CF MySQL Failover", func() {
 
 		Scenario("Broker failure", func() {
 			serviceInstanceName := generator.RandomName()
-			instanceURI := AppUri(appName) + "/service/mysql/" + serviceInstanceName
+			instanceURI := appUri(appName) + "/service/mysql/" + serviceInstanceName
 
 			// Remove partitions in case previous test did not cleanup correctly
 			partition.Off(broker0SshTunnel)
 			partition.Off(broker1SshTunnel)
 
 			Step("Take down first broker instance", func() {
-				partition.On(broker0SshTunnel, IntegrationConfig.Brokers[0].Ip)
+				partition.On(broker0SshTunnel, integrationConfig.Brokers[0].Ip)
 			})
 
 			Step("Create & bind a DB", func() {
-				createAndBindService(IntegrationConfig.ServiceName, serviceInstanceName, planName)
+				createAndBindService(integrationConfig.ServiceName, serviceInstanceName, planName)
 			})
 
 			Step("Write a key-value pair to DB", func() {
@@ -203,12 +171,12 @@ var _ = Feature("CF MySQL Failover", func() {
 			})
 
 			Step("Take down second broker instance", func() {
-				partition.On(broker1SshTunnel, IntegrationConfig.Brokers[1].Ip)
+				partition.On(broker1SshTunnel, integrationConfig.Brokers[1].Ip)
 			})
 
 			Step("Create & bind a DB again", func() {
 				serviceInstanceName := generator.RandomName()
-				createAndBindService(IntegrationConfig.ServiceName, serviceInstanceName, planName)
+				createAndBindService(integrationConfig.ServiceName, serviceInstanceName, planName)
 			})
 
 			Step("Write a second key-value pair to DB", func() {

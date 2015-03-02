@@ -14,7 +14,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 	BeforeEach(func() {
 		url = fmt.Sprintf(
 			"http://proxy-0.%s/v0/backends",
-			IntegrationConfig.Proxy.ExternalHost,
+			integrationConfig.Proxy.ExternalHost,
 		)
 	})
 
@@ -37,8 +37,8 @@ var _ = Describe("P-MySQL Proxy", func() {
 	It("accepts valid Basic Auth creds", func() {
 		req, err := http.NewRequest("GET", url, nil)
 		req.SetBasicAuth(
-			IntegrationConfig.Proxy.APIUsername,
-			IntegrationConfig.Proxy.APIPassword,
+			integrationConfig.Proxy.APIUsername,
+			integrationConfig.Proxy.APIPassword,
 		)
 		client := &http.Client{}
 		resp, err := client.Do(req)

@@ -2,14 +2,13 @@ package dashboard_test
 
 import (
 	"encoding/json"
-	"time"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
+	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gexec"
 	. "github.com/sclevine/agouti/core"
 	. "github.com/sclevine/agouti/dsl"
 	. "github.com/sclevine/agouti/matchers"
@@ -36,15 +35,14 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		StartChrome()
 
 		serviceInstanceName = RandomName()
-		planName := IntegrationConfig.Plans[0].Name
+		planName := integrationConfig.Plans[0].Name
 
-		createServiceCmd := Cf("create-service", IntegrationConfig.ServiceName, planName, serviceInstanceName)
-		Eventually(createServiceCmd, context_setup.ScaledTimeout(60*time.Second)).Should(Exit(0))
+		Step("Creating service")
+		ExecWithTimeout(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName), integrationConfig.LongTimeout())
 
-		serviceInfoCmd := Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName)
-		Eventually(serviceInfoCmd, 10*time.Second).Should(Exit(0))
-
+		Step("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
+		serviceInfoCmd := ExecWithTimeout(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), integrationConfig.ShortTimeout())
 		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -59,8 +57,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 	AfterEach(func() {
 		page.Destroy()
 
-		deleteServiceCmd := Cf("delete-service", "-f", serviceInstanceName)
-		Eventually(deleteServiceCmd, context_setup.ScaledTimeout(20*time.Second)).Should(Exit(0))
+		ExecWithTimeout(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout())
 		StopWebdriver()
 	})
 
