@@ -3,6 +3,7 @@ package service_test
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -27,8 +28,16 @@ var _ = Describe("P-MySQL Service", func() {
 	assertAppIsRunning := func(appName string) {
 		pingUri := appURI(appName) + "/ping"
 		fmt.Println("\n*** Checking that the app is responding at url: ", pingUri)
-		curlCmd := ExecWithTimeout(Curl(pingUri), integrationConfig.ShortTimeout())
-		Expect(curlCmd).To(Say("OK"))
+		appRunning := false
+		retryAttempts := 3
+		for i := 0; i < retryAttempts; i++ {
+			curlCmd := ExecWithTimeout(Curl(pingUri), integrationConfig.ShortTimeout())
+			if strings.Contains(string(curlCmd.Buffer().Contents()), "OK") {
+				appRunning = true
+				break
+			}
+		}
+		Expect(appRunning).To(BeTrue(), "App not running after %d attempts of curling /ping", retryAttempts)
 	}
 
 	It("Registers a route", func() {
