@@ -132,7 +132,7 @@ var _ = Describe("P-MySQL Service", func() {
 			It("enforces the storage quota for the plan", func() {
 				CreatesBindsAndStartsApp(PlanName)
 
-				uri := appURI(appName) + "/service/mysql/context_setup.ScaledTimeout(timeout), retryInterval" + serviceInstanceName + "/mykey"
+				uri := appURI(appName) + "/service/mysql/" + serviceInstanceName + "/mykey"
 				deleteUri := appURI(appName) + "/service/mysql/" + serviceInstanceName + "/delete-bulk-data"
 				firstValue := RandomName()[:20]
 				secondValue := RandomName()[:20]
