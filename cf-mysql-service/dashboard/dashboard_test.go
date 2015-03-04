@@ -5,7 +5,7 @@ import (
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -38,11 +38,11 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		planName := integrationConfig.Plans[0].Name
 
 		Step("Creating service")
-		ExecWithTimeout(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName), integrationConfig.LongTimeout())
+		runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
 
 		Step("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
-		serviceInfoCmd := ExecWithTimeout(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), integrationConfig.ShortTimeout())
+		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), integrationConfig.ShortTimeout()).Run()
 		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -57,7 +57,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 	AfterEach(func() {
 		page.Destroy()
 
-		ExecWithTimeout(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout())
+		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout()).Run()
 		StopWebdriver()
 	})
 

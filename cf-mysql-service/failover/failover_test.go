@@ -9,9 +9,9 @@ import (
 	. "github.com/sclevine/agouti/dsl"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
 )
@@ -30,30 +30,30 @@ var appName string
 
 func createAndBindService(serviceName, serviceInstanceName, planName string) {
 	By("Creating service instance")
-	ExecWithTimeout(Cf("create-service", serviceName, planName, serviceInstanceName), integrationConfig.LongTimeout())
+	runner.NewCmdRunner(Cf("create-service", serviceName, planName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
 
 	By("Binding app to service instance")
-	ExecWithTimeout(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
+	runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
 
 	By("Restarting app")
-	ExecWithTimeout(Cf("restart", appName), integrationConfig.LongTimeout())
+	runner.NewCmdRunner(Cf("restart", appName), integrationConfig.LongTimeout()).Run()
 }
 
 func assertAppIsRunning(appName string) {
 	pingURI := appUri(appName) + "/ping"
-	curlCmd := ExecWithTimeout(Curl(pingURI), integrationConfig.ShortTimeout())
+	curlCmd := runner.NewCmdRunner(runner.Curl(pingURI), integrationConfig.ShortTimeout()).Run()
 	Expect(curlCmd).Should(Say("OK"))
 }
 
 func assertWriteToDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	curlCmd := ExecWithTimeout(Curl("-d", value, curlURI), integrationConfig.ShortTimeout())
+	curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, curlURI), integrationConfig.ShortTimeout()).Run()
 	Expect(curlCmd).Should(Say(value))
 }
 
 func assertReadFromDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	curlCmd := ExecWithTimeout(Curl(curlURI), integrationConfig.ShortTimeout())
+	curlCmd := runner.NewCmdRunner(runner.Curl(curlURI), integrationConfig.ShortTimeout()).Run()
 	Expect(curlCmd).Should(Say(value))
 }
 
@@ -62,7 +62,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		appName = generator.RandomName()
 
 		Step("Push an app", func() {
-			ExecWithTimeout(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout())
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout()).Run()
 		})
 	})
 
@@ -89,7 +89,7 @@ var _ = Feature("CF MySQL Failover", func() {
 			})
 
 			Step("Start App", func() {
-				ExecWithTimeout(Cf("start", appName), integrationConfig.LongTimeout())
+				runner.NewCmdRunner(Cf("start", appName), integrationConfig.LongTimeout()).Run()
 				assertAppIsRunning(appName)
 			})
 
@@ -110,7 +110,7 @@ var _ = Feature("CF MySQL Failover", func() {
 
 			Step("Restart sinatra app to reset connections", func() {
 				fmt.Println("Restarting app")
-				ExecWithTimeout(Cf("restart", appName), integrationConfig.LongTimeout())
+				runner.NewCmdRunner(Cf("restart", appName), integrationConfig.LongTimeout()).Run()
 				fmt.Println("Checking whether app is running")
 				assertAppIsRunning(appName)
 			})

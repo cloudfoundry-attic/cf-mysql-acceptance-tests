@@ -3,7 +3,6 @@ package service_test
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -13,7 +12,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 )
 
 const (
@@ -26,25 +25,17 @@ var _ = Describe("P-MySQL Service", func() {
 	sinatraPath := "../../assets/sinatra_app"
 
 	assertAppIsRunning := func(appName string) {
-		pingUri := appURI(appName) + "/ping"
-		fmt.Println("\n*** Checking that the app is responding at url: ", pingUri)
-		appRunning := false
-		retryAttempts := 3
-		for i := 0; i < retryAttempts; i++ {
-			curlCmd := ExecWithTimeout(Curl(pingUri), integrationConfig.ShortTimeout())
-			if strings.Contains(string(curlCmd.Buffer().Contents()), "OK") {
-				appRunning = true
-				break
-			}
-		}
-		Expect(appRunning).To(BeTrue(), "App not running after %d attempts of curling /ping", retryAttempts)
+		pingURI := appURI(appName) + "/ping"
+		fmt.Println("\n*** Checking that the app is responding at url: ", pingURI)
+
+		runner.NewCmdRunner(runner.Curl(pingURI), integrationConfig.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
 	}
 
 	It("Registers a route", func() {
 		uri := fmt.Sprintf("http://%s/v2/catalog", integrationConfig.BrokerHost)
 
 		fmt.Printf("\n*** Curling url: %s\n", uri)
-		curlCmd := ExecWithTimeout(Curl(uri), integrationConfig.ShortTimeout())
+		curlCmd := runner.NewCmdRunner(runner.Curl(uri), integrationConfig.ShortTimeout()).Run()
 		Expect(curlCmd).To(Say("HTTP Basic: Access denied."))
 		fmt.Println("Expected failure occured")
 	})
@@ -54,12 +45,12 @@ var _ = Describe("P-MySQL Service", func() {
 
 		BeforeEach(func() {
 			appName = RandomName()
-			pushCmd := ExecWithTimeout(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout())
+			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout()).Run()
 			Expect(pushCmd).To(Say("OK"))
 		})
 
 		AfterEach(func() {
-			ExecWithTimeout(Cf("delete", appName, "-f"), integrationConfig.LongTimeout())
+			runner.NewCmdRunner(Cf("delete", appName, "-f"), integrationConfig.LongTimeout()).Run()
 		})
 
 		Describe("for each plan", func() {
@@ -68,22 +59,22 @@ var _ = Describe("P-MySQL Service", func() {
 					serviceInstanceName := RandomName()
 					uri := fmt.Sprintf("%s/service/mysql/%s/mykey", appURI(appName), serviceInstanceName)
 
-					ExecWithTimeout(Cf("create-service", integrationConfig.ServiceName, plan.Name, serviceInstanceName), integrationConfig.LongTimeout())
+					runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, plan.Name, serviceInstanceName), integrationConfig.LongTimeout()).Run()
 
-					ExecWithTimeout(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
-					ExecWithTimeout(Cf("start", appName), integrationConfig.LongTimeout())
+					runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
+					runner.NewCmdRunner(Cf("start", appName), integrationConfig.LongTimeout()).Run()
 					assertAppIsRunning(appName)
 
 					fmt.Printf("\n*** Posting to url: %s\n", uri)
-					curlCmd := ExecWithTimeout(Curl("-d", "myvalue", uri), integrationConfig.ShortTimeout())
+					curlCmd := runner.NewCmdRunner(runner.Curl("-d", "myvalue", uri), integrationConfig.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say("myvalue"))
 
 					fmt.Printf("\n*** Curling url: %s\n", uri)
-					curlCmd = ExecWithTimeout(Curl(uri), integrationConfig.ShortTimeout())
+					curlCmd = runner.NewCmdRunner(runner.Curl(uri), integrationConfig.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say("myvalue"))
 
-					ExecWithTimeout(Cf("unbind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
-					ExecWithTimeout(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout())
+					runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
+					runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout()).Run()
 				})
 			}
 		})
@@ -101,21 +92,21 @@ var _ = Describe("P-MySQL Service", func() {
 			plan = integrationConfig.Plans[0]
 
 			serviceURI = fmt.Sprintf("%s/service/mysql/%s", appURI(appName), serviceInstanceName)
-			ExecWithTimeout(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout())
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout()).Run()
 		})
 
 		JustBeforeEach(func() {
 			fmt.Printf("Creating service with serviceName: %s, planName: %s, serviceInstanceName: %s\n", integrationConfig.ServiceName, plan.Name, serviceInstanceName)
-			ExecWithTimeout(Cf("create-service", integrationConfig.ServiceName, plan.Name, serviceInstanceName), integrationConfig.LongTimeout())
-			ExecWithTimeout(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
-			ExecWithTimeout(Cf("start", appName), integrationConfig.LongTimeout())
+			runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, plan.Name, serviceInstanceName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("start", appName), integrationConfig.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 
 		AfterEach(func() {
-			ExecWithTimeout(Cf("unbind-service", appName, serviceInstanceName), integrationConfig.LongTimeout())
-			ExecWithTimeout(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout())
-			ExecWithTimeout(Cf("delete", appName, "-f"), integrationConfig.LongTimeout())
+			runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("delete", appName, "-f"), integrationConfig.LongTimeout()).Run()
 		})
 
 		ExceedLimit := func(maxStorageMb int) {
@@ -126,20 +117,20 @@ var _ = Describe("P-MySQL Service", func() {
 			loopIterations := (maxStorageMb / mbToWrite)
 
 			for i := 0; i < loopIterations; i++ {
-				curlCmd := ExecWithTimeout(Curl("-v", "-d", strconv.Itoa(mbToWrite), writeUri), integrationConfig.ShortTimeout())
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(mbToWrite), writeUri), integrationConfig.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
 			remainder := maxStorageMb % mbToWrite
 			if remainder != 0 {
-				curlCmd := ExecWithTimeout(Curl("-v", "-d", strconv.Itoa(remainder), writeUri), integrationConfig.ShortTimeout())
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(remainder), writeUri), integrationConfig.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
 			// Write a little bit more to guarantee we are over quota
 			// as opposed to being exactly at quota,
 			// We are not interested in the output because we know we will be over quota.
-			ExecWithTimeout(Curl("-v", "-d", strconv.Itoa(1), writeUri), integrationConfig.ShortTimeout())
+			runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(1), writeUri), integrationConfig.ShortTimeout()).Run()
 		}
 
 		// We only need to validate the storage quota enforcer operates as expected over the first plan.
@@ -151,11 +142,11 @@ var _ = Describe("P-MySQL Service", func() {
 			secondValue := RandomName()[:20]
 
 			fmt.Println("\n*** Proving we can write")
-			curlCmd := ExecWithTimeout(Curl("-d", firstValue, uri), integrationConfig.ShortTimeout())
+			curlCmd := runner.NewCmdRunner(runner.Curl("-d", firstValue, uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = ExecWithTimeout(Curl(uri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl(uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			ExceedLimit(plan.MaxStorageMb)
@@ -165,27 +156,27 @@ var _ = Describe("P-MySQL Service", func() {
 
 			fmt.Println("\n*** Proving we cannot write (expect app to fail)")
 			value := RandomName()[:20]
-			curlCmd = ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Error: (INSERT|UPDATE) command denied .* for table 'data_values'"))
 			fmt.Println("Expected failure occured")
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = ExecWithTimeout(Curl(uri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl(uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			fmt.Println("\n*** Deleting below quota")
-			curlCmd = ExecWithTimeout(Curl("-d", "20", deleteUri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl("-d", "20", deleteUri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Database now contains"))
 
 			fmt.Println("\n*** Sleeping to let quota enforcer run")
 			time.Sleep(quotaEnforcerSleepTime)
 
 			fmt.Println("\n*** Proving we can write")
-			curlCmd = ExecWithTimeout(Curl("-d", secondValue, uri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl("-d", secondValue, uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(secondValue))
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = ExecWithTimeout(Curl(uri), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl(uri), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(secondValue))
 		})
 
@@ -193,11 +184,11 @@ var _ = Describe("P-MySQL Service", func() {
 			connectionsURI := fmt.Sprintf("%s/connections/mysql/%s/", appURI(appName), serviceInstanceName)
 
 			fmt.Println("\n*** Proving we can use the max num of connections")
-			curlCmd := ExecWithTimeout(Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections)), integrationConfig.ShortTimeout())
+			curlCmd := runner.NewCmdRunner(runner.Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections)), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("success"))
 
 			fmt.Println("\n*** Proving the connection quota is enforced")
-			curlCmd = ExecWithTimeout(Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections+1)), integrationConfig.ShortTimeout())
+			curlCmd = runner.NewCmdRunner(runner.Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections+1)), integrationConfig.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Error"))
 		})
 
@@ -218,12 +209,12 @@ var _ = Describe("P-MySQL Service", func() {
 
 					fmt.Println("\n*** Proving we cannot write (expect app to fail)")
 					value := RandomName()[:20]
-					curlCmd := ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+					curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say("Error: (INSERT|UPDATE) command denied .* for table 'data_values'"))
 					fmt.Println("Expected failure occured")
 
 					fmt.Println("\n*** Upgrading service instance")
-					cfCmd := ExecWithTimeout(Cf("update-service", serviceInstanceName, "-p", newPlan.Name), integrationConfig.LongTimeout())
+					cfCmd := runner.NewCmdRunner(Cf("update-service", serviceInstanceName, "-p", newPlan.Name), integrationConfig.LongTimeout()).Run()
 					Expect(cfCmd).To(Say("OK"))
 
 					fmt.Println("\n*** Sleeping to let quota enforcer run")
@@ -231,7 +222,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 					fmt.Println("\n*** Proving we can write")
 					value = RandomName()[:20]
-					curlCmd = ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+					curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say(value))
 				})
 			})
@@ -254,11 +245,11 @@ var _ = Describe("P-MySQL Service", func() {
 						fmt.Println("\n*** Proving we can write")
 						value := RandomName()[:20]
 						uri := fmt.Sprintf("%s/mykey", serviceURI)
-						curlCmd := ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+						curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 
 						fmt.Println("\n*** Downgrading service instance (Expect failure)")
-						cfCmd := ExecWithTimeoutForExitCode(Cf("update-service", serviceInstanceName, "-p", smallPlan.Name), integrationConfig.LongTimeout(), 1)
+						cfCmd := runner.NewCmdRunner(Cf("update-service", serviceInstanceName, "-p", smallPlan.Name), integrationConfig.LongTimeout()).WithExitCode(1).Run()
 						Expect(cfCmd).To(Say("Service broker error"))
 						fmt.Println("Expected failure occured")
 					})
@@ -274,11 +265,11 @@ var _ = Describe("P-MySQL Service", func() {
 						fmt.Println("\n*** Proving we can write")
 						value := RandomName()[:20]
 						uri := fmt.Sprintf("%s/mykey", serviceURI)
-						curlCmd := ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+						curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 
 						fmt.Println("\n*** Downgrading service instance")
-						cfCmd := ExecWithTimeout(Cf("update-service", serviceInstanceName, "-p", smallPlan.Name), integrationConfig.LongTimeout())
+						cfCmd := runner.NewCmdRunner(Cf("update-service", serviceInstanceName, "-p", smallPlan.Name), integrationConfig.LongTimeout()).Run()
 						Expect(cfCmd).To(Say("OK"))
 
 						fmt.Println("\n*** Sleeping to let quota enforcer run")
@@ -286,7 +277,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 						fmt.Println("\n*** Proving we can write")
 						value = RandomName()[:20]
-						curlCmd = ExecWithTimeout(Curl("-d", value, uri), integrationConfig.ShortTimeout())
+						curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), integrationConfig.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 					})
 				})
