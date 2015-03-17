@@ -33,17 +33,17 @@ const (
 
 func assertAppIsRunning(appName string) {
 	pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
-	runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestEnv.ShortTimeout()).WithOutput("OK").Run()
+	runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestContext.ShortTimeout()).WithOutput("OK").Run()
 }
 
 func assertWriteToDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-d", value, curlURI), helpers.TestEnv.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl("-d", value, curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
 func assertReadFromDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl(curlURI), helpers.TestEnv.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl(curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
 var _ = Feature("CF MySQL Failover", func() {
@@ -67,7 +67,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		appName = generator.RandomName()
 
 		Step("Push an app", func() {
-			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
 		})
 	})
 
@@ -91,15 +91,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		fmt.Println("MYSQL NODE FAILOVER")
 
 		Step("Creating service instance[0]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[0]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[0]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[0]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[0]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[0]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Start app for the first time", func() {
-			runner.NewCmdRunner(Cf("start", appName), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("start", appName), helpers.TestContext.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 
@@ -119,7 +119,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Sleep to allow proxy time to fail-over", func() {
-			time.Sleep(helpers.TestEnv.ShortTimeout())
+			time.Sleep(helpers.TestContext.ShortTimeout())
 		})
 
 		Step("Write a second key-value pair to instance[0]", func() {
@@ -143,15 +143,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Creating service instance[1]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[1]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[1]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[1]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[1]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[1]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("restart", appName), helpers.TestContext.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 
@@ -176,15 +176,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Creating service instance[2]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[2]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[2]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[2]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[2]), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[2]), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		Step("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), helpers.TestEnv.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("restart", appName), helpers.TestContext.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 

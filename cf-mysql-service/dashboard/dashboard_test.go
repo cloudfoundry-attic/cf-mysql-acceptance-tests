@@ -40,16 +40,16 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		planName := helpers.TestConfig.Plans[0].Name
 
 		Step("Creating service")
-		runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestEnv.LongTimeout()).Run()
+		runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 
 		Step("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
-		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestEnv.ShortTimeout()).Run()
+		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestContext.ShortTimeout()).Run()
 		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		dashboardUrl = getDashboardUrl(serviceInstanceInfo)
-        regularUserContext := helpers.TestEnv.RegularUserContext()
+        regularUserContext := helpers.TestContext.RegularUserContext()
 		username = regularUserContext.Username
 		password = regularUserContext.Password
 
@@ -60,7 +60,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 	AfterEach(func() {
 		page.Destroy()
 
-		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestEnv.LongTimeout()).Run()
+		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 		StopWebdriver()
 	})
 

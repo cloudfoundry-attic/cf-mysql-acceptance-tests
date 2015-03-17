@@ -14,7 +14,7 @@ import (
 )
 
 var TestConfig MysqlIntegrationConfig
-var TestEnv context_setup.TestEnvironment
+var TestContext context_setup.SuiteContext
 
 func PrepareAndRunTests(packageName string, t *testing.T) {
     var err error
@@ -50,10 +50,10 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 		ginkgoconfig.GinkgoConfig.SkipString = strings.Join(skipStrings, "|")
 	}
 
-    TestEnv = context_setup.NewTestEnvironment(context_setup.NewContext(TestConfig.IntegrationConfig, "MySQLATS"))
+    TestContext = context_setup.NewContext(TestConfig.IntegrationConfig, "MySQLATS")
 
-    BeforeEach(TestEnv.BeforeEach)
-    AfterEach(TestEnv.AfterEach)
+    BeforeEach(TestContext.Setup)
+    AfterEach(TestContext.Teardown)
 
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))
