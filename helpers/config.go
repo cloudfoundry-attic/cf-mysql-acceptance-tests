@@ -1,12 +1,10 @@
 package helpers
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"time"
 
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 )
 
 type Component struct {
@@ -27,7 +25,7 @@ type Proxy struct {
 }
 
 type MysqlIntegrationConfig struct {
-	IntegrationConfig
+    context_setup.IntegrationConfig
 	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
 	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
 	IncludeFailoverTests  bool        `json:"include_failover_tests"`
@@ -39,93 +37,78 @@ type MysqlIntegrationConfig struct {
 	Proxy                 Proxy       `json:"proxy"`
 }
 
-func (m MysqlIntegrationConfig) ShortTimeout() time.Duration {
-	return ScaledTimeout(1 * time.Minute)
+func (c MysqlIntegrationConfig) AppURI(appname string) string {
+    return "http://" + appname + "." + c.AppsDomain
 }
 
-func (m MysqlIntegrationConfig) LongTimeout() time.Duration {
-	return ScaledTimeout(5 * time.Minute)
-}
+func LoadConfig() (MysqlIntegrationConfig, error) {
+    config := MysqlIntegrationConfig{}
 
-func LoadConfig() (config MysqlIntegrationConfig) {
 	path := os.Getenv("CONFIG")
 	if path == "" {
-		panic("Must set $CONFIG to point to an integration config .json file.")
+		return config, fmt.Errorf("Must set $CONFIG to point to an integration config .json file.")
 	}
 
-	return LoadPath(path)
+	err := context_setup.LoadConfig(path, &config)
+    if err != nil {
+        return config, fmt.Errorf("Loading config: %s", err.Error())
+    }
+
+    return config, nil
 }
 
-func LoadPath(path string) (config MysqlIntegrationConfig) {
-	configFile, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-
-	decoder := json.NewDecoder(configFile)
-	err = decoder.Decode(&config)
-	if err != nil {
-		panic(err)
-	}
-
-	if config.ApiEndpoint == "" {
-		panic("missing configuration 'api'")
-	}
-
-	if config.AdminUser == "" {
-		panic("missing configuration 'admin_user'")
-	}
-
-	if config.ApiEndpoint == "" {
-		panic("missing configuration 'admin_password'")
-	}
+func ValidateConfig(config *MysqlIntegrationConfig) error {
+    err := context_setup.ValidateConfig(&config.IntegrationConfig)
+    if err != nil {
+        return err
+    }
 
 	if config.ServiceName == "" {
-		panic("missing configuration 'service_name'")
+        return fmt.Errorf("Field 'service_name' must not be empty")
 	}
 
 	if config.Plans == nil {
-		panic("missing configuration 'plans'")
+        return fmt.Errorf("Field 'plans' must not be nil")
 	}
+
+    if len(config.Plans) == 0 {
+        return fmt.Errorf("Field 'plans' must not be empty")
+    }
 
 	for index, plan := range config.Plans {
 		if plan.Name == "" {
-			panic(fmt.Sprintf("missing configuration 'plans.name' for plan %d", index))
+            return fmt.Errorf("Field 'plans[%d].name' must not be empty", index)
 		}
 
 		if plan.MaxStorageMb == 0 {
-			panic(fmt.Sprintf("missing configuration 'plans.max_storage_mb' for plan %d", index))
+            return fmt.Errorf("Field 'plans[%d].max_storage_mb' must not be empty", index)
 		}
 
 		if plan.MaxUserConnections == 0 {
-			panic(fmt.Sprintf("missing configuration 'plans.max_user_connections' for plan %d", index))
+            return fmt.Errorf("Field 'plans[%d].max_user_connections' must not be empty", index)
 		}
 	}
 
 	if config.BrokerHost == "" {
-		panic("missing configuration 'broker_host'")
-	}
-
-	if config.TimeoutScale <= 0 {
-		config.TimeoutScale = 1
+        return fmt.Errorf("Field 'broker_host' must not be empty")
 	}
 
 	emptyProxy := Proxy{}
 	if config.Proxy == emptyProxy {
-		panic("missing configuration 'proxy'")
+        return fmt.Errorf("Field 'proxy' must not be empty")
 	}
 
 	if config.Proxy.ExternalHost == "" {
-		panic("missing configuration 'proxy.external_host'")
+        return fmt.Errorf("Field 'proxy.external_host' must not be empty")
 	}
 
 	if config.Proxy.APIUsername == "" {
-		panic("missing configuration 'proxy.api_username'")
+        return fmt.Errorf("Field 'proxy.api_username' must not be empty")
 	}
 
 	if config.Proxy.APIPassword == "" {
-		panic("missing configuration 'proxy.api_password'")
+        return fmt.Errorf("Field 'proxy.api_password' must not be empty")
 	}
 
-	return
+	return nil
 }

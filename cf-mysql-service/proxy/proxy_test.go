@@ -6,6 +6,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+    "github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 var _ = Describe("P-MySQL Proxy", func() {
@@ -14,7 +16,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 	BeforeEach(func() {
 		url = fmt.Sprintf(
 			"http://proxy-0.%s/v0/backends",
-			integrationConfig.Proxy.ExternalHost,
+            helpers.TestConfig.Proxy.ExternalHost,
 		)
 	})
 
@@ -37,8 +39,8 @@ var _ = Describe("P-MySQL Proxy", func() {
 	It("accepts valid Basic Auth creds", func() {
 		req, err := http.NewRequest("GET", url, nil)
 		req.SetBasicAuth(
-			integrationConfig.Proxy.APIUsername,
-			integrationConfig.Proxy.APIPassword,
+            helpers.TestConfig.Proxy.APIUsername,
+            helpers.TestConfig.Proxy.APIPassword,
 		)
 		client := &http.Client{}
 		resp, err := client.Do(req)

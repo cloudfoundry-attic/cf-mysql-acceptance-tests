@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
+    "github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 const (
@@ -31,18 +32,18 @@ const (
 )
 
 func assertAppIsRunning(appName string) {
-	pingURI := appUri(appName) + "/ping"
-	runner.NewCmdRunner(runner.Curl(pingURI), integrationConfig.ShortTimeout()).WithOutput("OK").Run()
+	pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
+	runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestEnv.ShortTimeout()).WithOutput("OK").Run()
 }
 
 func assertWriteToDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-d", value, curlURI), integrationConfig.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl("-d", value, curlURI), helpers.TestEnv.ShortTimeout()).WithOutput(value).Run()
 }
 
 func assertReadFromDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl(curlURI), integrationConfig.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl(curlURI), helpers.TestEnv.ShortTimeout()).WithOutput(value).Run()
 }
 
 var _ = Feature("CF MySQL Failover", func() {
@@ -50,14 +51,14 @@ var _ = Feature("CF MySQL Failover", func() {
 	var broker0SshTunnel, broker1SshTunnel string
 
 	BeforeEach(func() {
-		Expect(integrationConfig.MysqlNodes).NotTo(BeNil())
-		Expect(len(integrationConfig.MysqlNodes)).To(BeNumerically(">=", 1))
+		Expect(helpers.TestConfig.MysqlNodes).NotTo(BeNil())
+		Expect(len(helpers.TestConfig.MysqlNodes)).To(BeNumerically(">=", 1))
 
-		Expect(integrationConfig.Brokers).NotTo(BeNil())
-		Expect(len(integrationConfig.Brokers)).To(BeNumerically(">=", 2))
+		Expect(helpers.TestConfig.Brokers).NotTo(BeNil())
+		Expect(len(helpers.TestConfig.Brokers)).To(BeNumerically(">=", 2))
 
-		broker0SshTunnel = integrationConfig.Brokers[0].SshTunnel
-		broker1SshTunnel = integrationConfig.Brokers[1].SshTunnel
+		broker0SshTunnel = helpers.TestConfig.Brokers[0].SshTunnel
+		broker1SshTunnel = helpers.TestConfig.Brokers[1].SshTunnel
 
 		// Remove broker partitions in case previous test did not cleanup correctly
 		partition.Off(broker0SshTunnel)
@@ -66,7 +67,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		appName = generator.RandomName()
 
 		Step("Push an app", func() {
-			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestEnv.LongTimeout()).Run()
 		})
 	})
 
@@ -84,21 +85,21 @@ var _ = Feature("CF MySQL Failover", func() {
 
 		for i := 0; i < instanceCount; i++ {
 			serviceInstanceName[i] = generator.RandomName()
-			instanceURI[i] = appUri(appName) + "/service/mysql/" + serviceInstanceName[i]
+			instanceURI[i] = helpers.TestConfig.AppURI(appName) + "/service/mysql/" + serviceInstanceName[i]
 		}
 
 		fmt.Println("MYSQL NODE FAILOVER")
 
 		Step("Creating service instance[0]", func() {
-			runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName[0]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[0]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[0]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[0]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[0]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Start app for the first time", func() {
-			runner.NewCmdRunner(Cf("start", appName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("start", appName), helpers.TestEnv.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 
@@ -112,13 +113,13 @@ var _ = Feature("CF MySQL Failover", func() {
 
 		Step("Take down mysql node", func() {
 			partition.On(
-				integrationConfig.MysqlNodes[0].SshTunnel,
-				integrationConfig.MysqlNodes[0].Ip,
+				helpers.TestConfig.MysqlNodes[0].SshTunnel,
+				helpers.TestConfig.MysqlNodes[0].Ip,
 			)
 		})
 
 		Step("Sleep to allow proxy time to fail-over", func() {
-			time.Sleep(integrationConfig.ShortTimeout())
+			time.Sleep(helpers.TestEnv.ShortTimeout())
 		})
 
 		Step("Write a second key-value pair to instance[0]", func() {
@@ -134,7 +135,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		fmt.Println("BROKER FAILOVER")
 
 		Step("Take down first broker instance", func() {
-			partition.On(broker0SshTunnel, integrationConfig.Brokers[0].Ip)
+			partition.On(broker0SshTunnel, helpers.TestConfig.Brokers[0].Ip)
 		})
 
 		Step("Sleep to let route-registrar prune broker", func() {
@@ -142,15 +143,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Creating service instance[1]", func() {
-			runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName[1]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[1]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[1]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[1]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[1]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("restart", appName), helpers.TestEnv.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 
@@ -167,7 +168,7 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Take down second broker instance", func() {
-			partition.On(broker1SshTunnel, integrationConfig.Brokers[1].Ip)
+			partition.On(broker1SshTunnel, helpers.TestConfig.Brokers[1].Ip)
 		})
 
 		Step("Sleep to let route-registrar prune broker", func() {
@@ -175,15 +176,15 @@ var _ = Feature("CF MySQL Failover", func() {
 		})
 
 		Step("Creating service instance[2]", func() {
-			runner.NewCmdRunner(Cf("create-service", integrationConfig.ServiceName, planName, serviceInstanceName[2]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[2]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Binding app to instance[2]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[2]), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[2]), helpers.TestEnv.LongTimeout()).Run()
 		})
 
 		Step("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), integrationConfig.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("restart", appName), helpers.TestEnv.LongTimeout()).Run()
 			assertAppIsRunning(appName)
 		})
 

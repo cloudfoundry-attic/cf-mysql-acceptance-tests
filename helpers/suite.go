@@ -13,8 +13,22 @@ import (
 	context_setup "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
 )
 
-func PrepareAndRunTests(packageName string, integrationConfig *MysqlIntegrationConfig, t *testing.T) {
-	if integrationConfig.SmokeTestsOnly {
+var TestConfig MysqlIntegrationConfig
+var TestEnv context_setup.TestEnvironment
+
+func PrepareAndRunTests(packageName string, t *testing.T) {
+    var err error
+    TestConfig, err = LoadConfig()
+    if err != nil {
+        panic("Loading config: " + err.Error())
+    }
+
+    err = ValidateConfig(&TestConfig)
+    if err != nil {
+        panic("Validating config: " + err.Error())
+    }
+
+	if TestConfig.SmokeTestsOnly {
 		ginkgoconfig.GinkgoConfig.FocusString = "Service instance lifecycle"
 	}
 
@@ -24,11 +38,11 @@ func PrepareAndRunTests(packageName string, integrationConfig *MysqlIntegrationC
 		skipStrings = append(skipStrings, ginkgoconfig.GinkgoConfig.SkipString)
 	}
 
-	if !integrationConfig.IncludeDashboardTests {
+	if !TestConfig.IncludeDashboardTests {
 		skipStrings = append(skipStrings, "CF Mysql Dashboard")
 	}
 
-	if !integrationConfig.IncludeFailoverTests {
+	if !TestConfig.IncludeFailoverTests {
 		skipStrings = append(skipStrings, "CF MySQL Failover")
 	}
 
@@ -36,8 +50,10 @@ func PrepareAndRunTests(packageName string, integrationConfig *MysqlIntegrationC
 		ginkgoconfig.GinkgoConfig.SkipString = strings.Join(skipStrings, "|")
 	}
 
-	context_setup.TimeoutScale = integrationConfig.TimeoutScale
-	context_setup.SetupEnvironment(context_setup.NewContext(integrationConfig.IntegrationConfig, "MySQLATS"))
+    TestEnv = context_setup.NewTestEnvironment(context_setup.NewContext(TestConfig.IntegrationConfig, "MySQLATS"))
+
+    BeforeEach(TestEnv.BeforeEach)
+    AfterEach(TestEnv.AfterEach)
 
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))
