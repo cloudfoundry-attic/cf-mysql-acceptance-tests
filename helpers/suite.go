@@ -10,11 +10,11 @@ import (
 	"github.com/onsi/ginkgo/reporters"
 	. "github.com/onsi/gomega"
 
-	context_setup "github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/services"
 )
 
 var TestConfig MysqlIntegrationConfig
-var TestContext context_setup.SuiteContext
+var TestContext services.Context
 
 func PrepareAndRunTests(packageName string, t *testing.T) {
     var err error
@@ -50,7 +50,7 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 		ginkgoconfig.GinkgoConfig.SkipString = strings.Join(skipStrings, "|")
 	}
 
-    TestContext = context_setup.NewContext(TestConfig.IntegrationConfig, "MySQLATS")
+    TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
 
     BeforeEach(TestContext.Setup)
     AfterEach(TestContext.Teardown)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudfoundry-incubator/cf-test-helpers/services/context_setup"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/services"
 )
 
 type Component struct {
@@ -25,7 +25,7 @@ type Proxy struct {
 }
 
 type MysqlIntegrationConfig struct {
-    context_setup.IntegrationConfig
+    services.Config
 	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
 	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
 	IncludeFailoverTests  bool        `json:"include_failover_tests"`
@@ -49,7 +49,7 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 		return config, fmt.Errorf("Must set $CONFIG to point to an integration config .json file.")
 	}
 
-	err := context_setup.LoadConfig(path, &config)
+	err := services.LoadConfig(path, &config)
     if err != nil {
         return config, fmt.Errorf("Loading config: %s", err.Error())
     }
@@ -58,7 +58,7 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 }
 
 func ValidateConfig(config *MysqlIntegrationConfig) error {
-    err := context_setup.ValidateConfig(&config.IntegrationConfig)
+    err := services.ValidateConfig(&config.Config)
     if err != nil {
         return err
     }
