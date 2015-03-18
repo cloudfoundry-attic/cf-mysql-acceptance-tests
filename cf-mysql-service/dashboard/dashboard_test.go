@@ -9,11 +9,11 @@ import (
 	. "github.com/sclevine/agouti/dsl"
 	. "github.com/sclevine/agouti/matchers"
 
-    . "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
-    . "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-    "github.com/cloudfoundry-incubator/cf-test-helpers/runner"
+	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
-    "github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 var _ = Feature("CF Mysql Dashboard", func() {
@@ -49,7 +49,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		Expect(err).ShouldNot(HaveOccurred())
 
 		dashboardUrl = getDashboardUrl(serviceInstanceInfo)
-        regularUserContext := helpers.TestContext.RegularUserContext()
+		regularUserContext := helpers.TestContext.RegularUserContext()
 		username = regularUserContext.Username
 		password = regularUserContext.Password
 

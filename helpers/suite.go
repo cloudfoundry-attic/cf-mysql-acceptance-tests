@@ -17,16 +17,16 @@ var TestConfig MysqlIntegrationConfig
 var TestContext services.Context
 
 func PrepareAndRunTests(packageName string, t *testing.T) {
-    var err error
-    TestConfig, err = LoadConfig()
-    if err != nil {
-        panic("Loading config: " + err.Error())
-    }
+	var err error
+	TestConfig, err = LoadConfig()
+	if err != nil {
+		panic("Loading config: " + err.Error())
+	}
 
-    err = ValidateConfig(&TestConfig)
-    if err != nil {
-        panic("Validating config: " + err.Error())
-    }
+	err = ValidateConfig(&TestConfig)
+	if err != nil {
+		panic("Validating config: " + err.Error())
+	}
 
 	if TestConfig.SmokeTestsOnly {
 		ginkgoconfig.GinkgoConfig.FocusString = "Service instance lifecycle"
@@ -50,10 +50,10 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 		ginkgoconfig.GinkgoConfig.SkipString = strings.Join(skipStrings, "|")
 	}
 
-    TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
+	TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
 
-    BeforeEach(TestContext.Setup)
-    AfterEach(TestContext.Teardown)
+	BeforeEach(TestContext.Setup)
+	AfterEach(TestContext.Teardown)
 
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))

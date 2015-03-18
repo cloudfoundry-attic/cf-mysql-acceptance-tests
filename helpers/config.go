@@ -25,7 +25,7 @@ type Proxy struct {
 }
 
 type MysqlIntegrationConfig struct {
-    services.Config
+	services.Config
 	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
 	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
 	IncludeFailoverTests  bool        `json:"include_failover_tests"`
@@ -38,11 +38,11 @@ type MysqlIntegrationConfig struct {
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
-    return "http://" + appname + "." + c.AppsDomain
+	return "http://" + appname + "." + c.AppsDomain
 }
 
 func LoadConfig() (MysqlIntegrationConfig, error) {
-    config := MysqlIntegrationConfig{}
+	config := MysqlIntegrationConfig{}
 
 	path := os.Getenv("CONFIG")
 	if path == "" {
@@ -50,64 +50,64 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 	}
 
 	err := services.LoadConfig(path, &config)
-    if err != nil {
-        return config, fmt.Errorf("Loading config: %s", err.Error())
-    }
+	if err != nil {
+		return config, fmt.Errorf("Loading config: %s", err.Error())
+	}
 
-    return config, nil
+	return config, nil
 }
 
 func ValidateConfig(config *MysqlIntegrationConfig) error {
-    err := services.ValidateConfig(&config.Config)
-    if err != nil {
-        return err
-    }
+	err := services.ValidateConfig(&config.Config)
+	if err != nil {
+		return err
+	}
 
 	if config.ServiceName == "" {
-        return fmt.Errorf("Field 'service_name' must not be empty")
+		return fmt.Errorf("Field 'service_name' must not be empty")
 	}
 
 	if config.Plans == nil {
-        return fmt.Errorf("Field 'plans' must not be nil")
+		return fmt.Errorf("Field 'plans' must not be nil")
 	}
 
-    if len(config.Plans) == 0 {
-        return fmt.Errorf("Field 'plans' must not be empty")
-    }
+	if len(config.Plans) == 0 {
+		return fmt.Errorf("Field 'plans' must not be empty")
+	}
 
 	for index, plan := range config.Plans {
 		if plan.Name == "" {
-            return fmt.Errorf("Field 'plans[%d].name' must not be empty", index)
+			return fmt.Errorf("Field 'plans[%d].name' must not be empty", index)
 		}
 
 		if plan.MaxStorageMb == 0 {
-            return fmt.Errorf("Field 'plans[%d].max_storage_mb' must not be empty", index)
+			return fmt.Errorf("Field 'plans[%d].max_storage_mb' must not be empty", index)
 		}
 
 		if plan.MaxUserConnections == 0 {
-            return fmt.Errorf("Field 'plans[%d].max_user_connections' must not be empty", index)
+			return fmt.Errorf("Field 'plans[%d].max_user_connections' must not be empty", index)
 		}
 	}
 
 	if config.BrokerHost == "" {
-        return fmt.Errorf("Field 'broker_host' must not be empty")
+		return fmt.Errorf("Field 'broker_host' must not be empty")
 	}
 
 	emptyProxy := Proxy{}
 	if config.Proxy == emptyProxy {
-        return fmt.Errorf("Field 'proxy' must not be empty")
+		return fmt.Errorf("Field 'proxy' must not be empty")
 	}
 
 	if config.Proxy.ExternalHost == "" {
-        return fmt.Errorf("Field 'proxy.external_host' must not be empty")
+		return fmt.Errorf("Field 'proxy.external_host' must not be empty")
 	}
 
 	if config.Proxy.APIUsername == "" {
-        return fmt.Errorf("Field 'proxy.api_username' must not be empty")
+		return fmt.Errorf("Field 'proxy.api_username' must not be empty")
 	}
 
 	if config.Proxy.APIPassword == "" {
-        return fmt.Errorf("Field 'proxy.api_password' must not be empty")
+		return fmt.Errorf("Field 'proxy.api_password' must not be empty")
 	}
 
 	return nil

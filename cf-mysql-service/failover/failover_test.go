@@ -13,8 +13,8 @@ import (
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
-    "github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 )
 
 const (
