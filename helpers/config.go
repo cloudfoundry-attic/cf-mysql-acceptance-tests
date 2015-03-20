@@ -26,15 +26,12 @@ type Proxy struct {
 
 type MysqlIntegrationConfig struct {
 	services.Config
-	SmokeTestsOnly        bool        `json:"smoke_tests_only"`
-	IncludeDashboardTests bool        `json:"include_dashboard_tests"`
-	IncludeFailoverTests  bool        `json:"include_failover_tests"`
-	BrokerHost            string      `json:"broker_host"`
-	ServiceName           string      `json:"service_name"`
-	Plans                 []Plan      `json:"plans"`
-	Brokers               []Component `json:"brokers"`
-	MysqlNodes            []Component `json:"mysql_nodes"`
-	Proxy                 Proxy       `json:"proxy"`
+	BrokerHost  string      `json:"broker_host"`
+	ServiceName string      `json:"service_name"`
+	Plans       []Plan      `json:"plans"`
+	Brokers     []Component `json:"brokers"`
+	MysqlNodes  []Component `json:"mysql_nodes"`
+	Proxy       Proxy       `json:"proxy"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {

@@ -2,7 +2,6 @@ package helpers
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -26,28 +25,6 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 	err = ValidateConfig(&TestConfig)
 	if err != nil {
 		panic("Validating config: " + err.Error())
-	}
-
-	if TestConfig.SmokeTestsOnly {
-		ginkgoconfig.GinkgoConfig.FocusString = "Allows users"
-	}
-
-	var skipStrings []string
-
-	if ginkgoconfig.GinkgoConfig.SkipString != "" {
-		skipStrings = append(skipStrings, ginkgoconfig.GinkgoConfig.SkipString)
-	}
-
-	if !TestConfig.IncludeDashboardTests {
-		skipStrings = append(skipStrings, "CF Mysql Dashboard")
-	}
-
-	if !TestConfig.IncludeFailoverTests {
-		skipStrings = append(skipStrings, "CF MySQL Failover")
-	}
-
-	if len(skipStrings) > 0 {
-		ginkgoconfig.GinkgoConfig.SkipString = strings.Join(skipStrings, "|")
 	}
 
 	TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
