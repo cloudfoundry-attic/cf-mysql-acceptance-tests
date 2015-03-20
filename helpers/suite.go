@@ -34,6 +34,8 @@ func PrepareAndRunTests(packageName string, t *testing.T, withContext bool) {
 		AfterEach(TestContext.Teardown)
 	}
 
+	fmt.Printf("Plans: %#v\n", TestConfig.Plans)
+
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))
 	RunSpecsWithDefaultAndCustomReporters(t, fmt.Sprintf("P-MySQL Acceptance Tests -- %s", packageName), []Reporter{junitReporter})

@@ -1,4 +1,4 @@
-package service_test
+package quota_test
 
 import (
 	"testing"
@@ -7,5 +7,5 @@ import (
 )
 
 func TestService(t *testing.T) {
-	helpers.PrepareAndRunTests("Service", t, true)
+	helpers.PrepareAndRunTests("Quota", t, true)
 }
