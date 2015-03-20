@@ -41,22 +41,14 @@ var _ = Describe("P-MySQL Service", func() {
 	})
 
 	Describe("Service instance lifecycle", func() {
-		var appName string
-
-		BeforeEach(func() {
-			appName = RandomName()
-			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
-			Expect(pushCmd).To(Say("OK"))
-		})
-
-		AfterEach(func() {
-			runner.NewCmdRunner(Cf("delete", appName, "-f"), helpers.TestContext.LongTimeout()).Run()
-		})
-
 		// The It() must not be inside the for loop otherwise ginkgo focusStrings will not function correctly.
 		// Address this in #86745860
 		It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for each plan", func() {
 			for _, plan := range helpers.TestConfig.Plans {
+				appName := RandomName()
+				pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
+				Expect(pushCmd).To(Say("OK"))
+
 				serviceInstanceName := RandomName()
 				uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
 
@@ -76,6 +68,8 @@ var _ = Describe("P-MySQL Service", func() {
 
 				runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 				runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+
+				runner.NewCmdRunner(Cf("delete", appName, "-f"), helpers.TestContext.LongTimeout()).Run()
 			}
 		})
 	})
