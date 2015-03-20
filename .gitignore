@@ -3,3 +3,4 @@ tags
 vendor/bin
 vendor/pkg
 integration_config.json
+*.test
