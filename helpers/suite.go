@@ -29,7 +29,7 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 	}
 
 	if TestConfig.SmokeTestsOnly {
-		ginkgoconfig.GinkgoConfig.FocusString = "Service instance lifecycle"
+		ginkgoconfig.GinkgoConfig.FocusString = "Allows users"
 	}
 
 	var skipStrings []string

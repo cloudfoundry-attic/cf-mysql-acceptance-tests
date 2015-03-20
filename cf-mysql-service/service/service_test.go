@@ -53,29 +53,29 @@ var _ = Describe("P-MySQL Service", func() {
 			runner.NewCmdRunner(Cf("delete", appName, "-f"), helpers.TestContext.LongTimeout()).Run()
 		})
 
-		Describe("for each plan", func() {
+		// The It() must not be inside the for loop otherwise ginkgo focusStrings will not function correctly.
+		// Address this in #86745860
+		It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for each plan", func() {
 			for _, plan := range helpers.TestConfig.Plans {
-				It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for a plan", func() {
-					serviceInstanceName := RandomName()
-					uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
+				serviceInstanceName := RandomName()
+				uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
 
-					runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+				runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 
-					runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-					runner.NewCmdRunner(Cf("start", appName), helpers.TestContext.LongTimeout()).Run()
-					assertAppIsRunning(appName)
+				runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+				runner.NewCmdRunner(Cf("start", appName), helpers.TestContext.LongTimeout()).Run()
+				assertAppIsRunning(appName)
 
-					fmt.Printf("\n*** Posting to url: %s\n", uri)
-					curlCmd := runner.NewCmdRunner(runner.Curl("-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
-					Expect(curlCmd).To(Say("myvalue"))
+				fmt.Printf("\n*** Posting to url: %s\n", uri)
+				curlCmd := runner.NewCmdRunner(runner.Curl("-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
+				Expect(curlCmd).To(Say("myvalue"))
 
-					fmt.Printf("\n*** Curling url: %s\n", uri)
-					curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
-					Expect(curlCmd).To(Say("myvalue"))
+				fmt.Printf("\n*** Curling url: %s\n", uri)
+				curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+				Expect(curlCmd).To(Say("myvalue"))
 
-					runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-					runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-				})
+				runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+				runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 			}
 		})
 	})
