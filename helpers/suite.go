@@ -15,7 +15,7 @@ import (
 var TestConfig MysqlIntegrationConfig
 var TestContext services.Context
 
-func PrepareAndRunTests(packageName string, t *testing.T) {
+func PrepareAndRunTests(packageName string, t *testing.T, withContext bool) {
 	var err error
 	TestConfig, err = LoadConfig()
 	if err != nil {
@@ -29,8 +29,10 @@ func PrepareAndRunTests(packageName string, t *testing.T) {
 
 	TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
 
-	BeforeEach(TestContext.Setup)
-	AfterEach(TestContext.Teardown)
+	if withContext {
+		BeforeEach(TestContext.Setup)
+		AfterEach(TestContext.Teardown)
+	}
 
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))

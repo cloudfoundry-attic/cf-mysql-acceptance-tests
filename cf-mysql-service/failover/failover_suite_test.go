@@ -7,5 +7,5 @@ import (
 )
 
 func TestFailover(t *testing.T) {
-	helpers.PrepareAndRunTests("Failover", t)
+	helpers.PrepareAndRunTests("Failover", t, true)
 }

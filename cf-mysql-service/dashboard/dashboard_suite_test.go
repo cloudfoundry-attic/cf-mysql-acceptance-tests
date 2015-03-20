@@ -7,5 +7,5 @@ import (
 )
 
 func TestDashboard(t *testing.T) {
-	helpers.PrepareAndRunTests("Dashboard", t)
+	helpers.PrepareAndRunTests("Dashboard", t, true)
 }

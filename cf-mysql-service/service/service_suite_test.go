@@ -7,5 +7,5 @@ import (
 )
 
 func TestService(t *testing.T) {
-	helpers.PrepareAndRunTests("Service", t)
+	helpers.PrepareAndRunTests("Service", t, true)
 }

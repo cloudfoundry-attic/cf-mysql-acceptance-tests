@@ -7,5 +7,5 @@ import (
 )
 
 func TestService(t *testing.T) {
-	helpers.PrepareAndRunTests("Proxy", t)
+	helpers.PrepareAndRunTests("Proxy", t, false)
 }
