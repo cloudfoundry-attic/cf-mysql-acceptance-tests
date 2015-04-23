@@ -140,7 +140,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 			fmt.Println("\n*** Proving the connection quota is enforced")
 			curlCmd = runner.NewCmdRunner(runner.Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections+1)), helpers.TestContext.ShortTimeout()).Run()
-			Expect(curlCmd).To(Say("Error"))
+			Expect(curlCmd).To(Say("Error"), "Connection quota was not enforced. This may fail if proxies are behind a load balancer.")
 		})
 
 		Describe("Migrating a service instance between plans of different storage quota", func() {
