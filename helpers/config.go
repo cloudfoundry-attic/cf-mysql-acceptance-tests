@@ -19,9 +19,11 @@ type Plan struct {
 }
 
 type Proxy struct {
-	ExternalHost string `json:"external_host"`
-	APIUsername  string `json:"api_username"`
-	APIPassword  string `json:"api_password"`
+	ExternalHost      string `json:"external_host"`
+	APIUsername       string `json:"api_username"`
+	APIPassword       string `json:"api_password"`
+	SkipSSLValidation bool   `json:"skip_ssl_validation"`
+	ForceHTTPS        bool   `json:"api_force_https"`
 }
 
 type MysqlIntegrationConfig struct {
