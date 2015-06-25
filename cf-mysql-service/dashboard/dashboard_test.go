@@ -36,6 +36,9 @@ var _ = Feature("CF Mysql Dashboard", func() {
 	Background(func() {
 		StartChrome()
 
+		page = CreatePage()
+		page.Size(640, 480)
+
 		serviceInstanceName = RandomName()
 		planName := helpers.TestConfig.Plans[0].Name
 
@@ -52,16 +55,16 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		regularUserContext := helpers.TestContext.RegularUserContext()
 		username = regularUserContext.Username
 		password = regularUserContext.Password
-
-		page = CreatePage()
-		page.Size(640, 480)
 	})
 
 	AfterEach(func() {
-		page.Destroy()
+		Step("Stopping Webdriver")
+		err := page.Destroy()
+		Expect(err).ToNot(HaveOccurred())
+		StopWebdriver()
+		Step("Stopped Webdriver")
 
 		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-		StopWebdriver()
 	})
 
 	Scenario("Login via dashboard url", func() {
