@@ -5,21 +5,22 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/sclevine/agouti/core"
-	. "github.com/sclevine/agouti/dsl"
+	. "github.com/sclevine/agouti"
 	. "github.com/sclevine/agouti/matchers"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
+	"fmt"
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	"time"
 )
 
-var _ = Feature("CF Mysql Dashboard", func() {
+var _ = Describe("CF Mysql Dashboard", func() {
 	var (
-		page                Page
+		page                *Page
+		driver              *WebDriver
 		dashboardUrl        string
 		username            string
 		password            string
@@ -34,22 +35,25 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		return entity["dashboard_url"].(string)
 	}
 
-	Background(func() {
-		StartChrome()
+	BeforeEach(func() {
 
-		page = CreatePage()
-		page.Size(640, 480)
+		driver = PhantomJS()
+		Expect(driver.Start()).To(Succeed())
+
+		var err error
+		page, err = driver.NewPage()
+		Expect(err).ToNot(HaveOccurred())
 
 		serviceInstanceName = RandomName()
 		planName := helpers.TestConfig.Plans[0].Name
 
-		Step("Creating service")
+		By("Creating service")
 		runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 
-		Step("Verifing service instance exists")
+		By("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
 		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestContext.ShortTimeout()).Run()
-		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
+		err = json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		dashboardUrl = getDashboardUrl(serviceInstanceInfo)
@@ -59,33 +63,37 @@ var _ = Feature("CF Mysql Dashboard", func() {
 	})
 
 	AfterEach(func() {
-		Step("Stopping Webdriver")
-		err := page.Destroy()
-		Expect(err).ToNot(HaveOccurred())
-		StopWebdriver()
-		Step("Stopped Webdriver")
+		By("Stopping Webdriver")
+		Expect(page.Destroy()).To(Succeed())
+
+		Expect(driver.Stop()).To(Succeed())
 
 		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 	})
 
-	Scenario("Login via dashboard url", func() {
-		Step("navigate to dashboard url", func() {
-			page.Navigate(dashboardUrl)
-			Eventually(page.Find("h1")).Should(HaveText("Welcome!"))
+	It("Login via dashboard url", func() {
+		By("navigate to dashboard url", func() {
+			time.Sleep(time.Second * 10)
+			err := page.Navigate(dashboardUrl)
+			Expect(err).ToNot(HaveOccurred())
+			content, err := page.HTML()
+			Expect(err).ToNot(HaveOccurred())
+			fmt.Printf("Login Page: %s", content)
+			Eventually(page.Find("h1"), time.Second*5).Should(HaveText("Welcome!"))
 		})
 
-		Step("submit login credentials", func() {
-			Fill(page.Find("input[name=username]"), username)
-			Fill(page.Find("input[name=password]"), password)
-			Submit(page.Find("form"))
+		By("submit login credentials", func() {
+			Expect(page.Find("input[name=username]").Fill(username)).To(Succeed())
+			Expect(page.Find("input[name=password]").Fill(password)).To(Succeed())
+			Expect(page.Find("form").Submit()).To(Succeed())
 		})
 
-		Step("authorize broker application", func() {
-			Eventually(page.Find("h1")).Should(HaveText("Application Authorization"))
-			Click(page.Find("button#authorize"))
+		By("authorize broker application", func() {
+			Eventually(page.Find("h1"), time.Second*5).Should(HaveText("Application Authorization"))
+			Expect(page.Find("button#authorize").Click()).To(Succeed())
 		})
 
-		Step("end up on dashboard", func() {
+		By("end up on dashboard", func() {
 			Eventually(page, time.Second*5).Should(HaveTitle("MySQL Management Dashboard"))
 		})
 	})
