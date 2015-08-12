@@ -16,7 +16,7 @@ var _ = Describe("P-MySQL Service broker", func() {
 		uri := fmt.Sprintf("https://%s/v2/catalog", helpers.TestConfig.BrokerHost)
 
 		fmt.Printf("\n*** Curling url: %s\n", uri)
-		curlCmd := runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+		curlCmd := runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
 		Expect(curlCmd).To(Say("HTTP Basic: Access denied."))
 		fmt.Println("Expected failure occured")
 	})

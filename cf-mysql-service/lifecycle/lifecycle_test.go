@@ -20,7 +20,7 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
 		fmt.Println("\n*** Checking that the app is responding at url: ", pingURI)
 
-		runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestContext.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
+		runner.NewCmdRunner(runner.Curl("-k", pingURI), helpers.TestContext.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
 	}
 
 	It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
@@ -39,11 +39,11 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			assertAppIsRunning(appName)
 
 			fmt.Printf("\n*** Posting to url: %s\n", uri)
-			curlCmd := runner.NewCmdRunner(runner.Curl("-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("myvalue"))
 
 			fmt.Printf("\n*** Curling url: %s\n", uri)
-			curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("myvalue"))
 
 			runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
