@@ -37,7 +37,7 @@ type MysqlIntegrationConfig struct {
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
-	return "http://" + appname + "." + c.AppsDomain
+	return "https://" + appname + "." + c.AppsDomain
 }
 
 func LoadConfig() (MysqlIntegrationConfig, error) {

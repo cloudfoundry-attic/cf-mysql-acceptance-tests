@@ -13,7 +13,7 @@ import (
 
 var _ = Describe("P-MySQL Service broker", func() {
 	It("Registers a route", func() {
-		uri := fmt.Sprintf("http://%s/v2/catalog", helpers.TestConfig.BrokerHost)
+		uri := fmt.Sprintf("https://%s/v2/catalog", helpers.TestConfig.BrokerHost)
 
 		fmt.Printf("\n*** Curling url: %s\n", uri)
 		curlCmd := runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
