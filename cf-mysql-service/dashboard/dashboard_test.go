@@ -52,7 +52,7 @@ var _ = Describe("CF Mysql Dashboard", func() {
 
 		By("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
-		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestContext.ShortTimeout()).Run()
+		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName, "-k"), helpers.TestContext.ShortTimeout()).Run()
 		err = json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 

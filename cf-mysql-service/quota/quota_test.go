@@ -28,7 +28,7 @@ var _ = Describe("P-MySQL Service", func() {
 		pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
 		fmt.Println("\n*** Checking that the app is responding at url: ", pingURI)
 
-		runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestContext.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
+		runner.NewCmdRunner(runner.Curl("-k", pingURI), helpers.TestContext.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
 	}
 
 	Describe("Enforcing MySQL storage and connection quota", func() {
@@ -68,20 +68,20 @@ var _ = Describe("P-MySQL Service", func() {
 			loopIterations := (maxStorageMb / mbToWrite)
 
 			for i := 0; i < loopIterations; i++ {
-				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(mbToWrite), writeUri), helpers.TestContext.ShortTimeout()).Run()
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v","-k", "-d", strconv.Itoa(mbToWrite), writeUri), helpers.TestContext.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
 			remainder := maxStorageMb % mbToWrite
 			if remainder != 0 {
-				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(remainder), writeUri), helpers.TestContext.ShortTimeout()).Run()
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v","-k", "-d", strconv.Itoa(remainder), writeUri), helpers.TestContext.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
 			// Write a little bit more to guarantee we are over quota
 			// as opposed to being exactly at quota,
 			// We are not interested in the output because we know we will be over quota.
-			runner.NewCmdRunner(runner.Curl("-v", "-d", strconv.Itoa(1), writeUri), helpers.TestContext.ShortTimeout()).Run()
+			runner.NewCmdRunner(runner.Curl("-v", "-k", "-d", strconv.Itoa(1), writeUri), helpers.TestContext.ShortTimeout()).Run()
 		}
 
 		// We only need to validate the storage quota enforcer operates as expected over the first plan.
@@ -93,11 +93,11 @@ var _ = Describe("P-MySQL Service", func() {
 			secondValue := RandomName()[:20]
 
 			fmt.Println("\n*** Proving we can write")
-			curlCmd := runner.NewCmdRunner(runner.Curl("-d", firstValue, uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", firstValue, uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			ExceedLimit(plan.MaxStorageMb)
@@ -107,27 +107,27 @@ var _ = Describe("P-MySQL Service", func() {
 
 			fmt.Println("\n*** Proving we cannot write (expect app to fail)")
 			value := RandomName()[:20]
-			curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Error: (INSERT|UPDATE) command denied .* for table 'data_values'"))
 			fmt.Println("Expected failure occured")
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(firstValue))
 
 			fmt.Println("\n*** Deleting below quota")
-			curlCmd = runner.NewCmdRunner(runner.Curl("-d", "20", deleteUri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", "-d", "20", deleteUri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Database now contains"))
 
 			fmt.Println("\n*** Sleeping to let quota enforcer run")
 			time.Sleep(quotaEnforcerSleepTime)
 
 			fmt.Println("\n*** Proving we can write")
-			curlCmd = runner.NewCmdRunner(runner.Curl("-d", secondValue, uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", "-d", secondValue, uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(secondValue))
 
 			fmt.Println("\n*** Proving we can read")
-			curlCmd = runner.NewCmdRunner(runner.Curl(uri), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say(secondValue))
 		})
 
@@ -135,11 +135,11 @@ var _ = Describe("P-MySQL Service", func() {
 			connectionsURI := fmt.Sprintf("%s/connections/mysql/%s/", helpers.TestConfig.AppURI(appName), serviceInstanceName)
 
 			fmt.Println("\n*** Proving we can use the max num of connections")
-			curlCmd := runner.NewCmdRunner(runner.Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections)), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd := runner.NewCmdRunner(runner.Curl("-k", connectionsURI+strconv.Itoa(plan.MaxUserConnections)), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("success"))
 
 			fmt.Println("\n*** Proving the connection quota is enforced")
-			curlCmd = runner.NewCmdRunner(runner.Curl(connectionsURI+strconv.Itoa(plan.MaxUserConnections+1)), helpers.TestContext.ShortTimeout()).Run()
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", connectionsURI+strconv.Itoa(plan.MaxUserConnections+1)), helpers.TestContext.ShortTimeout()).Run()
 			Expect(curlCmd).To(Say("Error"), "Connection quota was not enforced. This may fail if proxies are behind a load balancer.")
 		})
 
@@ -160,7 +160,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 					fmt.Println("\n*** Proving we cannot write (expect app to fail)")
 					value := RandomName()[:20]
-					curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+					curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say("Error: (INSERT|UPDATE) command denied .* for table 'data_values'"))
 					fmt.Println("Expected failure occured")
 
@@ -173,7 +173,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 					fmt.Println("\n*** Proving we can write")
 					value = RandomName()[:20]
-					curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+					curlCmd = runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 					Expect(curlCmd).To(Say(value))
 				})
 			})
@@ -196,7 +196,7 @@ var _ = Describe("P-MySQL Service", func() {
 						fmt.Println("\n*** Proving we can write")
 						value := RandomName()[:20]
 						uri := fmt.Sprintf("%s/mykey", serviceURI)
-						curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+						curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 
 						fmt.Println("\n*** Downgrading service instance (Expect failure)")
@@ -216,7 +216,7 @@ var _ = Describe("P-MySQL Service", func() {
 						fmt.Println("\n*** Proving we can write")
 						value := RandomName()[:20]
 						uri := fmt.Sprintf("%s/mykey", serviceURI)
-						curlCmd := runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+						curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 
 						fmt.Println("\n*** Downgrading service instance")
@@ -228,7 +228,7 @@ var _ = Describe("P-MySQL Service", func() {
 
 						fmt.Println("\n*** Proving we can write")
 						value = RandomName()[:20]
-						curlCmd = runner.NewCmdRunner(runner.Curl("-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
+						curlCmd = runner.NewCmdRunner(runner.Curl("-k", "-d", value, uri), helpers.TestContext.ShortTimeout()).Run()
 						Expect(curlCmd).To(Say(value))
 					})
 				})

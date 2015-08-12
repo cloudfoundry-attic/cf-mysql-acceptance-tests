@@ -32,17 +32,17 @@ const (
 
 func assertAppIsRunning(appName string) {
 	pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
-	runner.NewCmdRunner(runner.Curl(pingURI), helpers.TestContext.ShortTimeout()).WithOutput("OK").Run()
+	runner.NewCmdRunner(runner.Curl("-k", pingURI), helpers.TestContext.ShortTimeout()).WithOutput("OK").Run()
 }
 
 func assertWriteToDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-d", value, curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl("-d", value,"-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
 func assertReadFromDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl(curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl("-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
 var _ = Describe("CF MySQL Failover", func() {
