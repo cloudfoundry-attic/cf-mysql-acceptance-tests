@@ -47,33 +47,4 @@ var _ = Describe("P-MySQL Proxy", func() {
 		Expect(err).NotTo(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusOK))
 	})
-
-	Context("with http scheme", func() {
-		BeforeEach(func() {
-			url = fmt.Sprintf(
-				"http://proxy-0-%s/v0/backends",
-				helpers.TestConfig.Proxy.ExternalHost,
-			)
-		})
-
-		It("redirects to https if ForceHTTPS is set", func() {
-			req, err := http.NewRequest("GET", url, nil)
-			req.SetBasicAuth(
-				helpers.TestConfig.Proxy.APIUsername,
-				helpers.TestConfig.Proxy.APIPassword,
-			)
-			resp, err := http.DefaultClient.Transport.RoundTrip(req)
-			Expect(err).NotTo(HaveOccurred())
-
-			if helpers.TestConfig.Proxy.ForceHTTPS {
-				Expect(resp.StatusCode).To(Equal(http.StatusFound))
-
-				location, err := resp.Location()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(location.Scheme).To(Equal("https"))
-			} else {
-				Expect(resp.StatusCode).To(Equal(http.StatusOK))
-			}
-		})
-	})
 })
