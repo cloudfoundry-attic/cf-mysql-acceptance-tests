@@ -13,7 +13,7 @@ type Component struct {
 }
 
 type Plan struct {
-	Name               string `json:"plan_name"`
+	Name               string `json:"name"`
 	MaxStorageMb       int    `json:"max_storage_mb"`
 	MaxUserConnections int    `json:"max_user_connections"`
 }
@@ -68,10 +68,6 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 
 	if config.Plans == nil {
 		return fmt.Errorf("Field 'plans' must not be nil")
-	}
-
-	if len(config.Plans) == 0 {
-		return fmt.Errorf("Field 'plans' must not be empty")
 	}
 
 	for index, plan := range config.Plans {
