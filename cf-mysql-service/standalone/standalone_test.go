@@ -10,7 +10,7 @@ import (
 )
 
 var _ = Describe("MySQL Standalone Deployment", func() {
- 	var (
+	var (
 		db *sql.DB
 		dbName string
 	)

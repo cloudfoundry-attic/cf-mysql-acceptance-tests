@@ -2,9 +2,7 @@ package standalone_test
 
 import (
 	"testing"
-
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
-
 	. "github.com/onsi/gomega"
 	"github.com/nu7hatch/gouuid"
 	"fmt"
