@@ -25,15 +25,23 @@ type Proxy struct {
 	SkipSSLValidation bool   `json:"skip_ssl_validation"`
 	ForceHTTPS        bool   `json:"api_force_https"`
 }
+ type Standalone struct {
+	 Host	string		`json:"host"`
+	 MySQLUsername string `json:"username"`
+	 MySQLPassword string `json:"password"`
+	 Port int `json:"port"`
+ }
 
 type MysqlIntegrationConfig struct {
 	services.Config
-	BrokerHost  string      `json:"broker_host"`
-	ServiceName string      `json:"service_name"`
-	Plans       []Plan      `json:"plans"`
-	Brokers     []Component `json:"brokers"`
-	MysqlNodes  []Component `json:"mysql_nodes"`
-	Proxy       Proxy       `json:"proxy"`
+	BrokerHost  	string      `json:"broker_host"`
+	ServiceName 	string      `json:"service_name"`
+	Plans       	[]Plan      `json:"plans"`
+	Brokers     	[]Component `json:"brokers"`
+	MysqlNodes  	[]Component `json:"mysql_nodes"`
+	Proxy       	Proxy       `json:"proxy"`
+	Standalone		Standalone		`json:"standalone"`
+
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
