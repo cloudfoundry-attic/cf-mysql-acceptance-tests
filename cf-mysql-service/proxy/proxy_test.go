@@ -12,39 +12,83 @@ import (
 
 var _ = Describe("P-MySQL Proxy", func() {
 	var (
-		url string
+		urlProxy0 string
+		urlProxy1 string
 	)
 
 	BeforeEach(func() {
-		url = fmt.Sprintf(
+		urlProxy0 = fmt.Sprintf(
 			"https://proxy-0.%s/v0/backends",
+			helpers.TestConfig.Proxy.ExternalHost,
+		)
+
+		urlProxy1 = fmt.Sprintf(
+			"https://proxy-1.%s/v0/backends",
 			helpers.TestConfig.Proxy.ExternalHost,
 		)
 	})
 
-	It("prompts for Basic Auth creds when they aren't provided", func() {
-		resp, err := http.Get(url)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+	var _ = Context("urlProxy0", func() {
+
+		It("prompts for Basic Auth creds when they aren't provided", func() {
+			resp, err := http.Get(urlProxy0)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+		})
+
+		It("does not accept bad Basic Auth creds", func() {
+			req, err := http.NewRequest("GET", urlProxy0, nil)
+			req.SetBasicAuth("bad_username", "bad_password")
+			resp, err := http.DefaultClient.Do(req)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+
+		})
+
+		It("accepts valid Basic Auth creds", func() {
+			req, err := http.NewRequest("GET", urlProxy0, nil)
+			req.SetBasicAuth(
+				helpers.TestConfig.Proxy.APIUsername,
+				helpers.TestConfig.Proxy.APIPassword,
+			)
+			resp, err := http.DefaultClient.Do(req)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+		})
+
 	})
 
-	It("does not accept bad Basic Auth creds", func() {
-		req, err := http.NewRequest("GET", url, nil)
-		req.SetBasicAuth("bad_username", "bad_password")
-		resp, err := http.DefaultClient.Do(req)
+	var _ = Context("urlProxy1", func() {
 
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
-	})
+		It("prompts for Basic Auth creds when they aren't provided", func() {
+			resp, err := http.Get(urlProxy1)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+		})
 
-	It("accepts valid Basic Auth creds", func() {
-		req, err := http.NewRequest("GET", url, nil)
-		req.SetBasicAuth(
-			helpers.TestConfig.Proxy.APIUsername,
-			helpers.TestConfig.Proxy.APIPassword,
-		)
-		resp, err := http.DefaultClient.Do(req)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(resp.StatusCode).To(Equal(http.StatusOK))
+		It("does not accept bad Basic Auth creds", func() {
+			req, err := http.NewRequest("GET", urlProxy1, nil)
+			req.SetBasicAuth("bad_username", "bad_password")
+			resp, err := http.DefaultClient.Do(req)
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
+
+		})
+
+		It("accepts valid Basic Auth creds", func() {
+			req, err := http.NewRequest("GET", urlProxy1, nil)
+			req.SetBasicAuth(
+				helpers.TestConfig.Proxy.APIUsername,
+				helpers.TestConfig.Proxy.APIPassword,
+			)
+			resp, err := http.DefaultClient.Do(req)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(http.StatusOK))
+
+		})
+
 	})
 })
