@@ -19,29 +19,28 @@ type Plan struct {
 }
 
 type Proxy struct {
-	ExternalHost      string `json:"external_host"`
-	APIUsername       string `json:"api_username"`
-	APIPassword       string `json:"api_password"`
-	SkipSSLValidation bool   `json:"skip_ssl_validation"`
-	ForceHTTPS        bool   `json:"api_force_https"`
+	DashboardUrls     []string `json:"dashboard_urls"`
+	APIUsername       string   `json:"api_username"`
+	APIPassword       string   `json:"api_password"`
+	SkipSSLValidation bool     `json:"skip_ssl_validation"`
+	ForceHTTPS        bool     `json:"api_force_https"`
 }
- type Standalone struct {
-	 Host	string		`json:"host"`
-	 MySQLUsername string `json:"username"`
-	 MySQLPassword string `json:"password"`
-	 Port int `json:"port"`
- }
+type Standalone struct {
+	Host          string `json:"host"`
+	MySQLUsername string `json:"username"`
+	MySQLPassword string `json:"password"`
+	Port          int    `json:"port"`
+}
 
 type MysqlIntegrationConfig struct {
 	services.Config
-	BrokerHost  	string      `json:"broker_host"`
-	ServiceName 	string      `json:"service_name"`
-	Plans       	[]Plan      `json:"plans"`
-	Brokers     	[]Component `json:"brokers"`
-	MysqlNodes  	[]Component `json:"mysql_nodes"`
-	Proxy       	Proxy       `json:"proxy"`
-	Standalone		Standalone		`json:"standalone"`
-
+	BrokerHost  string      `json:"broker_host"`
+	ServiceName string      `json:"service_name"`
+	Plans       []Plan      `json:"plans"`
+	Brokers     []Component `json:"brokers"`
+	MysqlNodes  []Component `json:"mysql_nodes"`
+	Proxy       Proxy       `json:"proxy"`
+	Standalone  Standalone  `json:"standalone"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
@@ -100,13 +99,14 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 		return fmt.Errorf("Field 'broker_host' must not be empty")
 	}
 
-	emptyProxy := Proxy{}
-	if config.Proxy == emptyProxy {
-		return fmt.Errorf("Field 'proxy' must not be empty")
+	if len(config.Proxy.DashboardUrls) == 0 {
+		return fmt.Errorf("Field 'proxy.dashboardUrls' must not be empty")
 	}
 
-	if config.Proxy.ExternalHost == "" {
-		return fmt.Errorf("Field 'proxy.external_host' must not be empty")
+	for index, url := range config.Proxy.DashboardUrls {
+		if url == "" {
+			return fmt.Errorf("Field 'proxy.dashboard_urls[%d]' must not be empty", index)
+		}
 	}
 
 	if config.Proxy.APIUsername == "" {

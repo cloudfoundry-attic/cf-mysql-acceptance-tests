@@ -28,13 +28,10 @@ func PrepareAndRunTests(packageName string, t *testing.T, withContext bool) {
 	}
 
 	TestContext = services.NewContext(TestConfig.Config, "MySQLATS")
-
 	if withContext {
 		BeforeEach(TestContext.Setup)
 		AfterEach(TestContext.Teardown)
 	}
-
-	fmt.Printf("Plans: %#v\n", TestConfig.Plans)
 
 	RegisterFailHandler(Fail)
 	junitReporter := reporters.NewJUnitReporter(fmt.Sprintf("junit_%d.xml", ginkgoconfig.GinkgoConfig.ParallelNode))
