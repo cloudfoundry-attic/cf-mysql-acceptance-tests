@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	"fmt"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
@@ -13,22 +12,17 @@ import (
 var _ = Describe("P-MySQL Proxy", func() {
 
 	It("prompts for Basic Auth creds when they aren't provided", func() {
-		for index, url := range helpers.TestConfig.Proxy.DashboardUrls {
-			urlProxy := fmt.Sprintf("https://proxy-%d.%s/v0/backends", index, url)
-
-			resp, err := http.Get(urlProxy)
+		for _, url := range helpers.TestConfig.Proxy.DashboardUrls {
+			resp, err := http.Get(url)
 
 			Expect(err).NotTo(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(http.StatusUnauthorized))
-
 		}
 	})
 
 	It("does not accept bad Basic Auth creds", func() {
-		for index, url := range helpers.TestConfig.Proxy.DashboardUrls {
-			urlProxy := fmt.Sprintf("https://proxy-%d.%s/v0/backends", index, url)
-
-			req, err := http.NewRequest("GET", urlProxy, nil)
+		for _, url := range helpers.TestConfig.Proxy.DashboardUrls {
+			req, err := http.NewRequest("GET", url, nil)
 			req.SetBasicAuth("bad_username", "bad_password")
 			resp, err := http.DefaultClient.Do(req)
 
@@ -38,10 +32,8 @@ var _ = Describe("P-MySQL Proxy", func() {
 	})
 
 	It("accepts valid Basic Auth creds", func() {
-		for index, url := range helpers.TestConfig.Proxy.DashboardUrls {
-			urlProxy := fmt.Sprintf("https://proxy-%d.%s/v0/backends", index, url)
-
-			req, err := http.NewRequest("GET", urlProxy, nil)
+		for _, url := range helpers.TestConfig.Proxy.DashboardUrls {
+			req, err := http.NewRequest("GET", url, nil)
 			req.SetBasicAuth(
 				helpers.TestConfig.Proxy.APIUsername,
 				helpers.TestConfig.Proxy.APIPassword,
