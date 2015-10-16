@@ -1,21 +1,21 @@
 package standalone_test
 
 import (
+	"database/sql"
 	"fmt"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
+	_ "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
-	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var _ = Describe("MySQL Standalone Deployment", func() {
 	var (
-		db *sql.DB
+		db     *sql.DB
 		dbName string
 	)
 
-	BeforeEach(func(){
+	BeforeEach(func() {
 		standalone := helpers.TestConfig.Standalone
 		connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/",
 			standalone.MySQLUsername,

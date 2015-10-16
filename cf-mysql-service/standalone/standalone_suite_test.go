@@ -1,12 +1,12 @@
 package standalone_test
 
 import (
-	"testing"
-	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
-	. "github.com/onsi/gomega"
-	"github.com/nu7hatch/gouuid"
 	"fmt"
+	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
+	"github.com/nu7hatch/gouuid"
+	. "github.com/onsi/gomega"
 	"strings"
+	"testing"
 )
 
 func TestService(t *testing.T) {

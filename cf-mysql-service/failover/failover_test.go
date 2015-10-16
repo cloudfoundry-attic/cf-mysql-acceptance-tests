@@ -37,7 +37,7 @@ func assertAppIsRunning(appName string) {
 
 func assertWriteToDB(key, value, uri string) {
 	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-d", value,"-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
+	runner.NewCmdRunner(runner.Curl("-d", value, "-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
 func assertReadFromDB(key, value, uri string) {

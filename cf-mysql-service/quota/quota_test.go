@@ -68,13 +68,13 @@ var _ = Describe("P-MySQL Service", func() {
 			loopIterations := (maxStorageMb / mbToWrite)
 
 			for i := 0; i < loopIterations; i++ {
-				curlCmd := runner.NewCmdRunner(runner.Curl("-v","-k", "-d", strconv.Itoa(mbToWrite), writeUri), helpers.TestContext.ShortTimeout()).Run()
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-k", "-d", strconv.Itoa(mbToWrite), writeUri), helpers.TestContext.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
 			remainder := maxStorageMb % mbToWrite
 			if remainder != 0 {
-				curlCmd := runner.NewCmdRunner(runner.Curl("-v","-k", "-d", strconv.Itoa(remainder), writeUri), helpers.TestContext.ShortTimeout()).Run()
+				curlCmd := runner.NewCmdRunner(runner.Curl("-v", "-k", "-d", strconv.Itoa(remainder), writeUri), helpers.TestContext.ShortTimeout()).Run()
 				Expect(curlCmd).To(Say("Database now contains"))
 			}
 
