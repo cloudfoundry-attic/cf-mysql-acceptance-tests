@@ -16,6 +16,7 @@ type Plan struct {
 	Name               string `json:"plan_name"`
 	MaxStorageMb       int    `json:"max_storage_mb"`
 	MaxUserConnections int    `json:"max_user_connections"`
+	Private            bool   `json:"private"`
 }
 
 type Proxy struct {

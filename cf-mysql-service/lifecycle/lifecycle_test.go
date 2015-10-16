@@ -25,6 +25,12 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 
 	It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
 		for _, plan := range helpers.TestConfig.Plans {
+
+			// skip if plan is private
+			if plan.Private {
+				continue
+			}
+
 			appName := RandomName()
 			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
 			Expect(pushCmd).To(Say("OK"))
@@ -50,6 +56,26 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 
 			runner.NewCmdRunner(Cf("delete", appName, "-f"), helpers.TestContext.LongTimeout()).Run()
+		}
+	})
+
+	It("Lists all public plans in cf marketplace", func() {
+		marketplaceCmd := runner.NewCmdRunner(Cf("m"), helpers.TestContext.LongTimeout()).Run()
+		marketplaceOutput := marketplaceCmd.Out.Contents()
+		for _, plan := range helpers.TestConfig.Plans {
+			if plan.Private == false {
+				Expect(marketplaceOutput).To(MatchRegexp("%v.*%v", helpers.TestConfig.ServiceName, plan.Name))
+			}
+		}
+	})
+
+	It("Does not list any private plans in cf marketplace", func() {
+		marketplaceCmd := runner.NewCmdRunner(Cf("m"), helpers.TestContext.LongTimeout()).Run()
+		marketplaceOutput := marketplaceCmd.Out.Contents()
+		for _, plan := range helpers.TestConfig.Plans {
+			if plan.Private == true {
+				Expect(marketplaceOutput).ToNot(MatchRegexp("%v.*%v", helpers.TestConfig.ServiceName, plan.Name))
+			}
 		}
 	})
 })
