@@ -31,7 +31,11 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 				continue
 			}
 
-			appName := RandomName()
+            appName := RandomName()
+
+            disableDiego := runner.NewCmdRunner(Cf("disable-diego", appName), helpers.TestContext.ShortTimeout()).Run()
+            Expect(disableDiego).To(Say("set to false"))
+
 			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
 			Expect(pushCmd).To(Say("OK"))
 
