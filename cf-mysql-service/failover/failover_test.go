@@ -66,7 +66,7 @@ var _ = Describe("CF MySQL Failover", func() {
 		appName = generator.RandomName()
 
 		By("Push an app", func() {
-			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
 		})
 	})
 

@@ -32,7 +32,7 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			}
 
 			appName := RandomName()
-			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
+			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
 			Expect(pushCmd).To(Say("OK"))
 
 			serviceInstanceName := RandomName()
