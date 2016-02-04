@@ -1,0 +1,53 @@
+{
+	"ImportPath": "github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests",
+	"GoVersion": "go1.5.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/cf-test-helpers/cf",
+			"Rev": "135579ed3e53d6ac04cb14e1f6e2b302a0212509"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/cf-test-helpers/generator",
+			"Rev": "135579ed3e53d6ac04cb14e1f6e2b302a0212509"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/cf-test-helpers/runner",
+			"Rev": "135579ed3e53d6ac04cb14e1f6e2b302a0212509"
+		},
+		{
+			"ImportPath": "github.com/cloudfoundry-incubator/cf-test-helpers/services",
+			"Rev": "135579ed3e53d6ac04cb14e1f6e2b302a0212509"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-33-g511937c",
+			"Rev": "511937c8c4dd4ecc4b56a918ec9719e5ac40c00c"
+		},
+		{
+			"ImportPath": "github.com/nu7hatch/gouuid",
+			"Rev": "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
+		},
+		{
+			"ImportPath": "github.com/onsi/ginkgo",
+			"Comment": "v1.1.0-33-g17ea479",
+			"Rev": "17ea479729ee427265ac1e913443018350946ddf"
+		},
+		{
+			"ImportPath": "github.com/onsi/gomega",
+			"Comment": "v1.0-71-g2152b45",
+			"Rev": "2152b45fa28a361beba9aab0885972323a444e28"
+		},
+		{
+			"ImportPath": "github.com/sclevine/agouti",
+			"Comment": "v2-latest-27-g547867f",
+			"Rev": "547867f76f1c76d9d5380db4bf27deedd12ec367"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/ssh",
+			"Rev": "bfc286917c5fcb7420d7e3092b50bbfd31b38a98"
+		}
+	]
+}
