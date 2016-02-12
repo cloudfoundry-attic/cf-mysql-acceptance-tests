@@ -24,8 +24,8 @@ type Proxy struct {
 	APIUsername       string   `json:"api_username"`
 	APIPassword       string   `json:"api_password"`
 	SkipSSLValidation bool     `json:"skip_ssl_validation"`
-	ForceHTTPS        bool     `json:"api_force_https"`
 }
+
 type Standalone struct {
 	Host          string `json:"host"`
 	MySQLUsername string `json:"username"`
@@ -35,13 +35,14 @@ type Standalone struct {
 
 type MysqlIntegrationConfig struct {
 	services.Config
-	BrokerHost  string      `json:"broker_host"`
-	ServiceName string      `json:"service_name"`
-	Plans       []Plan      `json:"plans"`
-	Brokers     []Component `json:"brokers"`
-	MysqlNodes  []Component `json:"mysql_nodes"`
-	Proxy       Proxy       `json:"proxy"`
-	Standalone  Standalone  `json:"standalone"`
+	BrokerHost     string      `json:"broker_host"`
+	BrokerProtocol string      `json:"broker_protocol"`
+	ServiceName    string      `json:"service_name"`
+	Plans          []Plan      `json:"plans"`
+	Brokers        []Component `json:"brokers"`
+	MysqlNodes     []Component `json:"mysql_nodes"`
+	Proxy          Proxy       `json:"proxy"`
+	Standalone     Standalone  `json:"standalone"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
@@ -59,6 +60,10 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 	err := services.LoadConfig(path, &config)
 	if err != nil {
 		return config, fmt.Errorf("Loading config: %s", err.Error())
+	}
+
+	if config.BrokerProtocol == "" {
+		config.BrokerProtocol = "https"
 	}
 
 	return config, nil

@@ -43,7 +43,7 @@ var _ = Describe("P-MySQL Service", func() {
 			plan = helpers.TestConfig.Plans[0]
 
 			serviceURI = fmt.Sprintf("%s/service/mysql/%s", helpers.TestConfig.AppURI(appName), serviceInstanceName)
-			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-no-start"), helpers.TestContext.LongTimeout()).Run()
+			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		JustBeforeEach(func() {
