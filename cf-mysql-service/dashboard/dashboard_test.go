@@ -66,7 +66,12 @@ var _ = Describe("CF Mysql Dashboard", func() {
 		By("Stopping Webdriver")
 		Expect(page.Destroy()).To(Succeed())
 
-		Expect(driver.Stop()).To(Succeed())
+		driverStopped := make(chan string)
+		go func() {
+		 driver.Stop()
+		 driverStopped <- "done"
+		}()
+		Eventually(driverStopped).Should(Receive())
 
 		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 	})
