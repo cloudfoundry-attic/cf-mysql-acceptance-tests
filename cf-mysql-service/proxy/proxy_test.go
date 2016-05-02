@@ -17,7 +17,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 
 	BeforeEach(func() {
 		url = fmt.Sprintf(
-			"https://proxy-0.%s/v0/backends",
+			"https://proxy-0-%s/v0/backends",
 			helpers.TestConfig.Proxy.ExternalHost,
 		)
 	})
@@ -51,7 +51,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 	Context("with http scheme", func() {
 		BeforeEach(func() {
 			url = fmt.Sprintf(
-				"http://proxy-0.%s/v0/backends",
+				"http://proxy-0-%s/v0/backends",
 				helpers.TestConfig.Proxy.ExternalHost,
 			)
 		})
