@@ -48,7 +48,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		Step("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
 		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName, "-k"), helpers.TestContext.ShortTimeout()).Run()
-		err = json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
+		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
 		dashboardUrl = getDashboardUrl(serviceInstanceInfo)
