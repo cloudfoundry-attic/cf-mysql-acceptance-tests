@@ -1,7 +1,6 @@
 package proxy_test
 
 import (
-	"fmt"
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
