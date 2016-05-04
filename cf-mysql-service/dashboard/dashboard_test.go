@@ -14,6 +14,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
+	"time"
 )
 
 var _ = Feature("CF Mysql Dashboard", func() {
@@ -47,7 +48,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 
 		Step("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
-		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName, "-k"), helpers.TestContext.ShortTimeout()).Run()
+		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestContext.ShortTimeout()).Run()
 		err := json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -85,7 +86,7 @@ var _ = Feature("CF Mysql Dashboard", func() {
 		})
 
 		Step("end up on dashboard", func() {
-			Eventually(page).Should(HaveTitle("MySQL Management Dashboard"))
+			Eventually(page, time.Second*5).Should(HaveTitle("MySQL Management Dashboard"))
 		})
 	})
 })

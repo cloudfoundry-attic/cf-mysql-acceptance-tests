@@ -16,10 +16,7 @@ var _ = Describe("P-MySQL Proxy", func() {
 	)
 
 	BeforeEach(func() {
-		url = fmt.Sprintf(
-			"https://proxy-0-%s/v0/backends",
-			helpers.TestConfig.Proxy.ExternalHost,
-		)
+		url = helpers.TestConfig.Proxy.DashboardUrls[0]
 	})
 
 	It("prompts for Basic Auth creds when they aren't provided", func() {
