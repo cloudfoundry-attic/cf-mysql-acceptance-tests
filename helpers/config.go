@@ -16,7 +16,7 @@ type Plan struct {
 	Name               string `json:"plan_name"`
 	MaxStorageMb       int    `json:"max_storage_mb"`
 	MaxUserConnections int    `json:"max_user_connections"`
-	Private            bool   `json:"private"`
+	Private            bool   `json:"private,omitempty"`
 }
 
 type Proxy struct {
@@ -24,6 +24,7 @@ type Proxy struct {
 	APIUsername       string   `json:"api_username"`
 	APIPassword       string   `json:"api_password"`
 	SkipSSLValidation bool     `json:"skip_ssl_validation"`
+	APIForceHTTPS     bool     `json:"api_force_https"`
 }
 
 type Standalone struct {
@@ -35,14 +36,14 @@ type Standalone struct {
 
 type MysqlIntegrationConfig struct {
 	services.Config
-	BrokerHost     string      `json:"broker_host"`
-	BrokerProtocol string      `json:"broker_protocol"`
+	BrokerHost     string      `json:"broker_host,omitempty"`
+	BrokerProtocol string      `json:"broker_protocol,omitempty"`
 	ServiceName    string      `json:"service_name"`
 	Plans          []Plan      `json:"plans"`
-	Brokers        []Component `json:"brokers"`
-	MysqlNodes     []Component `json:"mysql_nodes"`
+	Brokers        []Component `json:"brokers,omitempty"`
+	MysqlNodes     []Component `json:"mysql_nodes,omitempty"`
 	Proxy          Proxy       `json:"proxy"`
-	Standalone     Standalone  `json:"standalone"`
+	Standalone     Standalone  `json:"standalone,omitempty"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
