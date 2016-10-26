@@ -9,4 +9,4 @@ go install -v github.com/onsi/ginkgo/ginkgo
 
 source $MY_DIR/test-options.sh
 
-ginkgo $GINKGO_OPTS ${ROOT_DIR}/cf-mysql-service/standalone "$@"
+ginkgo $GINKGO_OPTS "$@" "${TEST_DIR}/standalone"
