@@ -4,15 +4,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/onsi/gomega/gexec"
 	"testing"
 	"time"
+
+	"github.com/onsi/gomega/gexec"
 )
 
 var binPath string
 
 var _ = SynchronizedBeforeSuite(func() []byte {
-	binPath, err := gexec.Build("github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/cmd/configure")
+	binPath, err := gexec.Build("github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/cmd/config-generator")
 	Expect(err).NotTo(HaveOccurred())
 
 	return []byte(binPath)
