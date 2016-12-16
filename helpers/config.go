@@ -44,6 +44,7 @@ type MysqlIntegrationConfig struct {
 	MysqlNodes     []Component `json:"mysql_nodes,omitempty"`
 	Proxy          Proxy       `json:"proxy"`
 	Standalone     Standalone  `json:"standalone,omitempty"`
+	StandaloneOnly bool        `json:"standalone_only,omitempty"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
@@ -71,6 +72,26 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 }
 
 func ValidateConfig(config *MysqlIntegrationConfig) error {
+	if config.StandaloneOnly {
+		if config.Standalone.Host == "" {
+			return fmt.Errorf("Field 'standalone.host' must not be empty")
+		}
+
+		if config.Standalone.Port == 0 {
+			return fmt.Errorf("Field 'standalone.port' must not be empty")
+		}
+
+		if config.Standalone.MySQLUsername == "" {
+			return fmt.Errorf("Field 'standalone.username' must not be empty")
+		}
+
+		if config.Standalone.MySQLPassword == "" {
+			return fmt.Errorf("Field 'standalone.password' must not be empty")
+		}
+
+		return nil
+	}
+
 	err := services.ValidateConfig(&config.Config)
 	if err != nil {
 		return err
