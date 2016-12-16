@@ -13,7 +13,7 @@ type Component struct {
 }
 
 type Plan struct {
-	Name               string `json:"plan_name"`
+	Name               string `json:"name"`
 	MaxStorageMb       int    `json:"max_storage_mb"`
 	MaxUserConnections int    `json:"max_user_connections"`
 	Private            bool   `json:"private,omitempty"`
