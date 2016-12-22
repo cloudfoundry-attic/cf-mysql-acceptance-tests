@@ -3,9 +3,9 @@ Updating Dependencies
 - CLI
 
     - Use Linux 64bit version of binary
-    - See https://github.com/cloudfoundry/cli/releases
+    - See cli releases at https://github.com/cloudfoundry/cli/releases
     - Name must be cf
 
 - Go Dependencies
-    - These are provided as submodules of cf-mysql-release
+    - These are provided as submodules of cf-mysql-release at https://github.com/cloudfoundry/cf-mysql-release
 
