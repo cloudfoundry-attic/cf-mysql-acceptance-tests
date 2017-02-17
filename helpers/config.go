@@ -20,6 +20,7 @@ type Plan struct {
 }
 
 type Proxy struct {
+	AggregatorUrl     string   `json:"aggregator_url"`
 	DashboardUrls     []string `json:"dashboard_urls"`
 	APIUsername       string   `json:"api_username"`
 	APIPassword       string   `json:"api_password"`
@@ -125,6 +126,10 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 
 	if config.BrokerHost == "" {
 		return fmt.Errorf("Field 'broker_host' must not be empty")
+	}
+
+	if config.Proxy.AggregatorUrl == "" {
+		return fmt.Errorf("Field 'aggregator_url' must not be empty")
 	}
 
 	if len(config.Proxy.DashboardUrls) == 0 {
