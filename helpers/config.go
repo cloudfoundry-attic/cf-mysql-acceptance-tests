@@ -128,10 +128,6 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 		return fmt.Errorf("Field 'broker_host' must not be empty")
 	}
 
-	if config.Proxy.AggregatorUrl == "" {
-		return fmt.Errorf("Field 'aggregator_url' must not be empty")
-	}
-
 	if len(config.Proxy.DashboardUrls) == 0 {
 		return fmt.Errorf("Field 'proxy.dashboardUrls' must not be empty")
 	}
