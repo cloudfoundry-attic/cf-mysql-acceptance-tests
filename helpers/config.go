@@ -20,7 +20,6 @@ type Plan struct {
 }
 
 type Proxy struct {
-	AggregatorUrl     string   `json:"aggregator_url"`
 	DashboardUrls     []string `json:"dashboard_urls"`
 	APIUsername       string   `json:"api_username"`
 	APIPassword       string   `json:"api_password"`
