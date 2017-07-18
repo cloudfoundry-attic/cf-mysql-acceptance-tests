@@ -1,10 +1,10 @@
 ![Ginkgo: A Golang BDD Testing Framework](http://onsi.github.io/ginkgo/images/ginkgo.png)
 
-[![Build Status](https://travis-ci.org/onsi/ginkgo.png)](https://travis-ci.org/onsi/ginkgo)
+[![Build Status](https://travis-ci.org/onsi/ginkgo.svg)](https://travis-ci.org/onsi/ginkgo)
 
 Jump to the [docs](http://onsi.github.io/ginkgo/) to learn more.  To start rolling your Ginkgo tests *now* [keep reading](#set-me-up)!
 
-To discuss Ginkgo and get updates, join the [google group](https://groups.google.com/d/forum/ginkgo-and-gomega).
+If you have a question, comment, bug report, feature request, etc. please open a GitHub issue.
 
 ## Feature List
 
@@ -43,6 +43,8 @@ To discuss Ginkgo and get updates, join the [google group](https://groups.google
 
 - [Completions for Sublime Text](https://github.com/onsi/ginkgo-sublime-completions): just use [Package Control](https://sublime.wbond.net/) to install `Ginkgo Completions`.
 
+- [Completions for VSCode](https://github.com/onsi/vscode-ginkgo): just use VSCode's extension installer to install `vscode-ginkgo`.
+
 - Straightforward support for third-party testing libraries such as [Gomock](https://code.google.com/p/gomock/) and [Testify](https://github.com/stretchr/testify).  Check out the [docs](http://onsi.github.io/ginkgo/#third-party-integrations) for details.
 
 - A modular architecture that lets you easily:
@@ -59,7 +61,7 @@ Agouti allows you run WebDriver integration tests.  Learn more about Agouti [her
 
 ## Set Me Up!
 
-You'll need Golang v1.2+ (Ubuntu users: you probably have Golang v1.0 -- you'll need to upgrade!)
+You'll need Golang v1.3+ (Ubuntu users: you probably have Golang v1.0 -- you'll need to upgrade!)
 
 ```bash
 
