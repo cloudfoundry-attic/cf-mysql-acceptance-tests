@@ -10,5 +10,5 @@ source $MY_DIR/test-options.sh
 
 ginkgo $GINKGO_OPTS \
   "$@" \
-  -r -skipPackage="failover,standalone" \
+  -r -skipPackage="failover,standalone,tuning" \
   "${TEST_DIR}"

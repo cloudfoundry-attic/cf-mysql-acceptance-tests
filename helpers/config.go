@@ -34,6 +34,10 @@ type Standalone struct {
 	Port          int    `json:"port"`
 }
 
+type Tuning struct {
+	ExpectationFilePath string `json:"expectation_file_path"`
+}
+
 type MysqlIntegrationConfig struct {
 	services.Config
 	BrokerHost     string      `json:"broker_host,omitempty"`
@@ -45,6 +49,7 @@ type MysqlIntegrationConfig struct {
 	Proxy          Proxy       `json:"proxy"`
 	Standalone     Standalone  `json:"standalone,omitempty"`
 	StandaloneOnly bool        `json:"standalone_only,omitempty"`
+	Tuning         Tuning      `json:"tuning,omitempty"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
