@@ -1,16 +1,15 @@
 package service
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
 	"syscall"
-	"text/template"
 	"time"
 )
 
@@ -27,15 +26,11 @@ type addressInfo struct {
 	Port    string
 }
 
-func (s *Service) URL() (string, error) {
-	if s.command == nil {
-		return "", errors.New("not running")
-	}
-
-	return s.url, nil
+func (s *Service) URL() string {
+	return s.url
 }
 
-func (s *Service) Start(timeout time.Duration) error {
+func (s *Service) Start(debug bool) error {
 	if s.command != nil {
 		return errors.New("already running")
 	}
@@ -45,7 +40,8 @@ func (s *Service) Start(timeout time.Duration) error {
 		return fmt.Errorf("failed to locate a free port: %s", err)
 	}
 
-	if s.url, err = buildURL(s.URLTemplate, address); err != nil {
+	url, err := buildURL(s.URLTemplate, address)
+	if err != nil {
 		return fmt.Errorf("failed to parse URL: %s", err)
 	}
 
@@ -54,13 +50,19 @@ func (s *Service) Start(timeout time.Duration) error {
 		return fmt.Errorf("failed to parse command: %s", err)
 	}
 
+	if debug {
+		command.Stdout = os.Stdout
+		command.Stderr = os.Stderr
+	}
+
 	if err := command.Start(); err != nil {
 		return fmt.Errorf("failed to run command: %s", err)
 	}
 
 	s.command = command
+	s.url = url
 
-	return s.waitForServer(timeout)
+	return nil
 }
 
 func (s *Service) Stop() error {
@@ -72,7 +74,7 @@ func (s *Service) Stop() error {
 	if runtime.GOOS == "windows" {
 		err = s.command.Process.Kill()
 	} else {
-		err = s.command.Process.Signal(syscall.SIGINT)
+		err = s.command.Process.Signal(syscall.SIGTERM)
 	}
 	if err != nil {
 		return fmt.Errorf("failed to stop command: %s", err)
@@ -80,42 +82,9 @@ func (s *Service) Stop() error {
 
 	s.command.Wait()
 	s.command = nil
+	s.url = ""
 
 	return nil
-}
-
-func buildURL(url string, address addressInfo) (string, error) {
-	urlTemplate, err := template.New("URL").Parse(url)
-	if err != nil {
-		return "", err
-	}
-	urlBuffer := &bytes.Buffer{}
-	if err := urlTemplate.Execute(urlBuffer, address); err != nil {
-		return "", err
-	}
-	return urlBuffer.String(), nil
-}
-
-func buildCommand(arguments []string, address addressInfo) (*exec.Cmd, error) {
-	if len(arguments) == 0 {
-		return nil, errors.New("empty command")
-	}
-
-	command := []string{}
-	for _, argument := range arguments {
-		argTemplate, err := template.New("command").Parse(argument)
-		if err != nil {
-			return nil, err
-		}
-
-		argBuffer := &bytes.Buffer{}
-		if err := argTemplate.Execute(argBuffer, address); err != nil {
-			return nil, err
-		}
-		command = append(command, argBuffer.String())
-	}
-
-	return exec.Command(command[0], command[1:]...), nil
 }
 
 func freeAddress() (addressInfo, error) {
@@ -130,7 +99,7 @@ func freeAddress() (addressInfo, error) {
 	return addressInfo{address, addressParts[0], addressParts[1]}, nil
 }
 
-func (s *Service) waitForServer(timeout time.Duration) error {
+func (s *Service) WaitForBoot(timeout time.Duration) error {
 	timeoutChan := time.After(timeout)
 	failedChan := make(chan struct{}, 1)
 	startedChan := make(chan struct{})
@@ -152,7 +121,6 @@ func (s *Service) waitForServer(timeout time.Duration) error {
 	select {
 	case <-timeoutChan:
 		failedChan <- struct{}{}
-		s.Stop()
 		return errors.New("failed to start before timeout")
 	case <-startedChan:
 		return nil

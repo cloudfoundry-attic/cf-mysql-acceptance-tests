@@ -32,9 +32,8 @@
 
 [[projects]]
   name = "github.com/sclevine/agouti"
-  packages = [".","api","api/internal/bus","api/internal/service","internal/element","internal/target","matchers","matchers/internal/colorparser","matchers/internal/page","matchers/internal/selection"]
-  revision = "b920a9cc753368454c642011939e1d7ec58e0024"
-  version = "2.0"
+  packages = [".","api","api/internal/bus","api/internal/service","internal/element","internal/target","matchers","matchers/internal","matchers/internal/colorparser"]
+  revision = "547867f76f1c76d9d5380db4bf27deedd12ec367"
 
 [[projects]]
   branch = "master"
@@ -69,6 +68,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d9406867c086ca9c0057f65873d196992ca0cd8191175df5c8e21641a91078e"
+  inputs-digest = "e6f476d8eb20c84b6ee5e89453a6af5af50336ab68abb5a928514b47550b19be"
   solver-name = "gps-cdcl"
   solver-version = 1
