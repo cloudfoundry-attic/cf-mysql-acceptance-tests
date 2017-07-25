@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	_ "github.com/go-sql-driver/mysql"
@@ -64,8 +65,16 @@ var _ = Describe("MySQL Server Tuning Configuration", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}
 
-		for k, v := range compareConfig {
-			Expect(mysqlVariables[k]).To(Equal(v), fmt.Sprintf("mismatch in %v", k))
+		var mismatchErrors []string
+
+		for k := range compareConfig {
+			if mysqlVariables[k] != compareConfig[k] {
+				mismatchErrors = append(mismatchErrors, fmt.Sprintf("%s: \n\t(Expected):\t%s \n\t(Actual):\t%s",
+					k, compareConfig[k], mysqlVariables[k]))
+
+			}
 		}
+
+		Expect(len(mismatchErrors)).To(Equal(0), strings.Join(mismatchErrors, "\n"))
 	})
 })
