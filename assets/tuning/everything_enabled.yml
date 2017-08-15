@@ -1,120 +1,120 @@
 ---
 - type: replace
-  path: /properties/cf_mysql/mysql/max_connections?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/max_connections?
   value: 1400
 
 - type: replace
-  path: /properties/cf_mysql/mysql/character_set_server?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/character_set_server?
   value: latin1
 
 - type: replace
-  path: /properties/cf_mysql/mysql/collation_server?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/collation_server?
   value: latin1_swedish_ci
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_buffer_pool_instances?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_buffer_pool_instances?
   value: 50
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_lock_wait_timeout?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_lock_wait_timeout?
   value: 200
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_log_buffer_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_log_buffer_size?
   value: 67108864
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_flush_log_at_trx_commit?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_flush_log_at_trx_commit?
   value: 2
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_flush_method?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_flush_method?
   value: O_DIRECT
 
 - type: replace
-  path: /properties/cf_mysql/mysql/innodb_strict_mode?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/innodb_strict_mode?
   value: true
 
 - type: replace
-  path: /properties/cf_mysql/mysql/max_allowed_packet?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/max_allowed_packet?
   value: 249999360
 
 - type: replace
-  path: /properties/cf_mysql/mysql/max_heap_table_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/max_heap_table_size?
   value: 14999552
 
 - type: replace
-  path: /properties/cf_mysql/mysql/table_definition_cache_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/table_definition_cache_size?
   value: 8000
 
 - type: replace
-  path: /properties/cf_mysql/mysql/table_open_cache?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/table_open_cache?
   value: 1500
 
 - type: replace
-  path: /properties/cf_mysql/mysql/tmp_table_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/tmp_table_size?
   value: 30000000
 
 - type: replace
-  path: /properties/cf_mysql/mysql/wsrep_max_ws_rows?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/wsrep_max_ws_rows?
   value: 20000
 
 - type: replace
-  path: /properties/cf_mysql/mysql/wsrep_max_ws_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/wsrep_max_ws_size?
   value: 500000000
 
 - type: replace
-  path: /properties/cf_mysql/mysql/skip_name_resolve?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/skip_name_resolve?
   value: false
 
 - type: replace
-  path: /properties/cf_mysql/mysql/ib_log_file_size?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/ib_log_file_size?
   value: 850
 
 - type: replace
-  path: /properties/cf_mysql/mysql/server_audit_events?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/server_audit_events?
   value: connect
 
 - type: replace
-  path: /properties/cf_mysql/mysql/server_audit_excluded_users?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/server_audit_excluded_users?
   value: [user1, user2]
 
 - type: replace
-  path: /properties/cf_mysql/mysql/server_audit_excluded_users_csv?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/server_audit_excluded_users_csv?
   value: csv_user1,csv_user2
 
 - type: replace
-  path: /properties/cf_mysql/mysql/cluster_name?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/cluster_name?
   value: my_cluster
 
 - type: replace
-  path: /properties/cf_mysql/mysql/userstat?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/userstat?
   value: true
 
 - type: replace
-  path: /properties/cf_mysql/mysql/binlog_enabled?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/binlog_enabled?
   value: true
 
 - type: replace
-  path: /properties/cf_mysql/mysql/binlog_expire_days?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/binlog_expire_days?
   value: 3
 
 - type: replace
-  path: /properties/cf_mysql/mysql/wsrep_debug?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/wsrep_debug?
   value: true
 
 - type: replace
-  path: /properties/cf_mysql/mysql/log_conflicts?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/log_conflicts?
   value: false
 
 - type: replace
-  path: /properties/cf_mysql/mysql/log_queries_not_using_indexes?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/log_queries_not_using_indexes?
   value: true
 
 - type: replace
-  path: /properties/cf_mysql/mysql/event_scheduler?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/event_scheduler?
   value: "ON"
 
 - type: replace
-  path: /properties/cf_mysql/mysql/enable_local_file?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/enable_local_file?
   value: "ON"

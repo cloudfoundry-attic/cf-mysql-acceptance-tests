@@ -32,16 +32,16 @@
 
 # explicitly test we ignore this due to server_audit_events being missing
 - type: replace
-  path: /properties/cf_mysql/mysql/server_audit_excluded_users?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/server_audit_excluded_users?
   value: [user1, user2]
 
 - type: replace
-  path: /properties/cf_mysql/mysql/binlog_enabled?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/binlog_enabled?
   value: false
 
 # mariadb default is 0
 # https://mariadb.com/kb/en/mariadb/replication-and-binary-log-server-system-variables/#expire_logs_days
 # explicitly test we ignore this due to binlog_enabled being false
 - type: replace
-  path: /properties/cf_mysql/mysql/binlog_expire_days?
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/binlog_expire_days?
   value: 3
