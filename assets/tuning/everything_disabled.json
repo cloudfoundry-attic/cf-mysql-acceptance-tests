@@ -6,5 +6,6 @@
   "server_audit_logging": "",
   "server_audit_excl_users": "",
   "log_bin": "OFF",
-  "expire_logs_days": "0"
+  "expire_logs_days": "0",
+  "wsrep_on": "OFF"
 }

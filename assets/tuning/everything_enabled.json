@@ -25,6 +25,7 @@
   "log_bin": "ON",
   "expire_logs_days": "3",
   "wsrep_debug": "ON",
+  "wsrep_on": "ON",
   "wsrep_log_conflicts": "OFF",
   "log_queries_not_using_indexes": "ON",
   "event_scheduler": "ON",
