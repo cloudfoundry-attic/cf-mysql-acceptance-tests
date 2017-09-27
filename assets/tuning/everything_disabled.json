@@ -7,5 +7,7 @@
   "server_audit_excl_users": "",
   "log_bin": "OFF",
   "expire_logs_days": "0",
-  "wsrep_on": "OFF"
+  "wsrep_on": "OFF",
+  "ssl_cert": "",
+  "ssl_key": ""
 }

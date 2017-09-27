@@ -29,5 +29,7 @@
   "wsrep_log_conflicts": "OFF",
   "log_queries_not_using_indexes": "ON",
   "event_scheduler": "ON",
-  "local_infile": "ON"
+  "local_infile": "ON",
+  "ssl_cert": "/etc/mysql/server-cert.pem",
+  "ssl_key": "/etc/mysql/server-key.pem"
 }
