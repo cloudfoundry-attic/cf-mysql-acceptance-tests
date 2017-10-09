@@ -24,10 +24,15 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	}
 
 	It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
+		if helpers.TestConfig.OrgName == "" {
+			AsUser(helpers.TestContext.AdminUserContext(), helpers.TestContext.ShortTimeout(), func() {
+				runner.NewCmdRunner(Cf("enable-service-access", helpers.TestConfig.ServiceName, "-o", helpers.TestContext.RegularUserContext().Org), helpers.TestContext.ShortTimeout()).Run()
+			})
+		}
 		for _, plan := range helpers.TestConfig.Plans {
 
-			// skip if plan is private
-			if plan.Private {
+			// skip if you provided an org and the plan is private
+			if helpers.TestConfig.OrgName != "" && plan.Private {
 				continue
 			}
 
