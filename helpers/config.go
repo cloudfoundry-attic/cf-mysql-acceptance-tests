@@ -43,6 +43,7 @@ type MysqlIntegrationConfig struct {
 	BrokerHost     string      `json:"broker_host,omitempty"`
 	BrokerProtocol string      `json:"broker_protocol,omitempty"`
 	ServiceName    string      `json:"service_name"`
+	EnableTlsTests bool        `json:"enable_tls_tests"`
 	Plans          []Plan      `json:"plans"`
 	Brokers        []Component `json:"brokers,omitempty"`
 	MysqlNodes     []Component `json:"mysql_nodes,omitempty"`
