@@ -23,8 +23,6 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	var createBindAndStartApp func(string, string, string, string)
 	var cleanupServiceInstance func(string, string)
 
-
-
 	It("Lists all public plans in cf marketplace", func() {
 		marketplaceCmd := runner.NewCmdRunner(Cf("m"), helpers.TestContext.LongTimeout()).Run()
 		marketplaceOutput := marketplaceCmd.Out.Contents()
@@ -47,7 +45,6 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 
 	Describe("When pushing an app", func() {
 		var appName, serviceInstanceName string
-		var hasPlan bool
 		var plan helpers.Plan
 
 		BeforeEach(func() {
@@ -55,8 +52,9 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			serviceInstanceName = RandomName()
 
 			if len(helpers.TestConfig.Plans) > 0 {
-				hasPlan = true
 				plan = helpers.TestConfig.Plans[0]
+			} else {
+				Skip("Skipping due to lack of plans.")
 			}
 
 			enableServiceAccessToOrg(helpers.TestConfig.ServiceName, helpers.TestContext.RegularUserContext().Org)
@@ -67,43 +65,43 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		})
 
 		It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
-			if hasPlan {
-				pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.AppsDomain, "-no-start"), helpers.TestContext.LongTimeout()).Run()
-				Expect(pushCmd).To(Say("OK"))
+			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.AppsDomain, "-no-start"), helpers.TestContext.LongTimeout()).Run()
+			Expect(pushCmd).To(Say("OK"))
 
-				uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
+			uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
 
-				createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
+			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
 
-				fmt.Printf("\n*** Posting to url: %s\n", uri)
-				curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
-				Expect(curlCmd).To(Say("myvalue"))
+			fmt.Printf("\n*** Posting to url: %s\n", uri)
+			curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
+			Expect(curlCmd).To(Say("myvalue"))
 
-				fmt.Printf("\n*** Curling url: %s\n", uri)
-				curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
-				Expect(curlCmd).To(Say("myvalue"))
-			}
+			fmt.Printf("\n*** Curling url: %s\n", uri)
+			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
+			Expect(curlCmd).To(Say("myvalue"))
 		})
 
-			It("Guarantees a TLS connection to a simple Spring app", func() {
-				if helpers.TestConfig.EnableTlsTests && hasPlan {
-					os.MkdirAll(fmt.Sprintf("%s/build/libs/", springPath), 0700)
-					os.Link("/var/vcap/packages/acceptance-tests/cipher_finder/cipher_finder.jar", fmt.Sprintf("%s/build/libs/cipher_finder.jar", springPath))
+		It("Guarantees a TLS connection to a simple Spring app", func() {
+			if !helpers.TestConfig.EnableTlsTests {
+				Skip("Skipping TLS tests as TLS is not enabled.")
+			}
 
-					// cf push cipher-finder -no-start
-					pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.AppsDomain, "-b", "java_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
-					Expect(pushCmd).To(Say("OK"))
+			os.MkdirAll(fmt.Sprintf("%s/build/libs/", springPath), 0700)
+			os.Link("/var/vcap/packages/acceptance-tests/cipher_finder/cipher_finder.jar", fmt.Sprintf("%s/build/libs/cipher_finder.jar", springPath))
 
-					// create-service & bind-service & start & assertAppIsRunning
-					createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
+			// cf push cipher-finder -no-start
+			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.AppsDomain, "-b", "java_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
+			Expect(pushCmd).To(Say("OK"))
 
-					// curl app on only endpoint to return active connection's cipher
-					uri := fmt.Sprintf("%s/ciphers", helpers.TestConfig.AppURI(appName))
-					fmt.Printf("\n*** GET curl to url: %s\n", uri)
-					curlCmd := runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
-					Expect(curlCmd).To(Say(`{"cipher_used":"([^"]+)"}`))
-				}
-			})
+			// create-service & bind-service & start & assertAppIsRunning
+			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
+
+			// curl app on only endpoint to return active connection's cipher
+			uri := fmt.Sprintf("%s/ciphers", helpers.TestConfig.AppURI(appName))
+			fmt.Printf("\n*** GET curl to url: %s\n", uri)
+			curlCmd := runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
+			Expect(curlCmd).To(Say(`{"cipher_used":"([^"]+)"}`))
+		})
 	})
 
 	enableServiceAccessToOrg = func(serviceName string, org string) {
