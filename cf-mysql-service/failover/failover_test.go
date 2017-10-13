@@ -1,19 +1,26 @@
 package failover_test
 
 import (
+	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
+	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+
 	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
-	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/partition"
 )
 
 const (
@@ -24,10 +31,6 @@ const (
 	planName    = "10mb"
 
 	sinatraPath = "../../assets/sinatra_app"
-
-	// The route takes 2 minutes to prune routes; wait 2.5 minutes to ensure
-	// we only route to the remaining broker.
-	routeRegistrarPruneSleepDuration = 150 * time.Second
 )
 
 func assertAppIsRunning(appName string) {
@@ -45,56 +48,101 @@ func assertReadFromDB(key, value, uri string) {
 	runner.NewCmdRunner(runner.Curl("-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
 }
 
-var _ = Describe("CF MySQL Failover", func() {
-	var appName string
-	var broker0SshTunnel, broker1SshTunnel string
+func deleteMysqlVM(host string) error {
+	logger := boshlog.NewLogger(boshlog.LevelError)
+	factory := boshdir.NewFactory(logger)
 
-	BeforeEach(func() {
-		Expect(helpers.TestConfig.MysqlNodes).NotTo(BeNil())
-		Expect(len(helpers.TestConfig.MysqlNodes)).To(BeNumerically(">=", 1))
+	config, err := boshdir.NewConfigFromURL(helpers.TestConfig.BOSH.URL)
+	if err != nil {
+		return err
+	}
 
-		Expect(helpers.TestConfig.Brokers).NotTo(BeNil())
-		Expect(len(helpers.TestConfig.Brokers)).To(BeNumerically(">=", 2))
+	config.CACert = helpers.TestConfig.BOSH.CACert
+	config.Client = helpers.TestConfig.BOSH.Client
+	config.ClientSecret = helpers.TestConfig.BOSH.ClientSecret
 
-		broker0SshTunnel = helpers.TestConfig.Brokers[0].SshTunnel
-		broker1SshTunnel = helpers.TestConfig.Brokers[1].SshTunnel
+	director, err := factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
+	if err != nil {
+		return err
+	}
 
-		// Remove broker partitions in case previous test did not cleanup correctly
-		partition.Off(broker0SshTunnel)
-		partition.Off(broker1SshTunnel)
+	deployment, err := director.FindDeployment("cf-mysql")
+	if err != nil {
+		return err
+	}
 
-		appName = generator.RandomName()
+	instances, err := deployment.Instances()
+	if err != nil {
+		return err
+	}
 
-		By("Push an app", func() {
-			runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
-		})
-	})
-
-	AfterEach(func() {
-		partition.Off(broker0SshTunnel)
-		partition.Off(broker1SshTunnel)
-		// TODO: Reintroduce the mariadb node once #81974864 is complete.
-		// partition.Off(IntegrationConfig.MysqlNodes[0].SshTunnel)
-	})
-
-	It("write/read data before and after a partition of mysql node and then broker", func() {
-		instanceCount := 3
-		serviceInstanceName := make([]string, instanceCount)
-		instanceURI := make([]string, instanceCount)
-
-		for i := 0; i < instanceCount; i++ {
-			serviceInstanceName[i] = generator.RandomName()
-			instanceURI[i] = helpers.TestConfig.AppURI(appName) + "/service/mysql/" + serviceInstanceName[i]
+	var vmcid string
+	for _, instance := range instances {
+		if instance.Group == "mysql" && instance.IPs[0] == host {
+			vmcid = instance.VMID
+			break
 		}
+	}
 
-		fmt.Println("MYSQL NODE FAILOVER")
+	if vmcid == "" {
+		return fmt.Errorf("no vm found with %s", host)
+	}
 
-		By("Creating service instance[0]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[0]), helpers.TestContext.LongTimeout()).Run()
+	return deployment.DeleteVM(vmcid)
+}
+
+func activeProxyBackend() (string, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := &http.Client{Transport: tr}
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/v0/cluster", helpers.TestConfig.Proxy.DashboardUrls[0]), nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.SetBasicAuth(helpers.TestConfig.Proxy.APIUsername, helpers.TestConfig.Proxy.APIPassword)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var cluster struct {
+		ActiveBackend struct {
+			Host string `json:"host"`
+		} `json:"activeBackend`
+	}
+
+	if err := json.Unmarshal(body, &cluster); err != nil {
+		return "", err
+	}
+
+	return cluster.ActiveBackend.Host, nil
+}
+
+var _ = Describe("CF MySQL Failover", func() {
+	It("write/read data before and after a partition of mysql node", func() {
+		var oldBackend string
+
+		serviceInstanceName := generator.RandomName()
+		appName := generator.RandomName()
+		instanceURI := helpers.TestConfig.AppURI(appName) + "/service/mysql/" + serviceInstanceName
+
+		runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
+
+		By("Creating service instance", func() {
+			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 		})
 
-		By("Binding app to instance[0]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[0]), helpers.TestContext.LongTimeout()).Run()
+		By("Binding app to instance", func() {
+			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
 		})
 
 		By("Start app for the first time", func() {
@@ -102,102 +150,44 @@ var _ = Describe("CF MySQL Failover", func() {
 			assertAppIsRunning(appName)
 		})
 
-		By("Write a key-value pair to instance[0]", func() {
-			assertWriteToDB(firstKey, firstValue, instanceURI[0])
+		By("Write a key-value pair to instance", func() {
+			assertWriteToDB(firstKey, firstValue, instanceURI)
 		})
 
-		By("Read value from instance[0]", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI[0])
+		By("Read value from instance", func() {
+			assertReadFromDB(firstKey, firstValue, instanceURI)
 		})
 
-		By("Take down mysql node", func() {
-			partition.On(
-				helpers.TestConfig.MysqlNodes[0].SshTunnel,
-				helpers.TestConfig.MysqlNodes[0].Ip,
-			)
+		By("querying the proxy for the current mysql backend", func() {
+			var err error
+
+			oldBackend, err = activeProxyBackend()
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
-		By("Sleep to allow proxy time to fail-over", func() {
-			time.Sleep(helpers.TestContext.ShortTimeout())
+		By("Take down the active mysql node", func() {
+			err := deleteMysqlVM(oldBackend)
+			Expect(err).NotTo(HaveOccurred())
+
 		})
 
-		By("Write a second key-value pair to instance[0]", func() {
-			assertWriteToDB(secondKey, secondValue, instanceURI[0])
+		By("poll the proxy for a backend change", func() {
+			Eventually(func() bool {
+				backend, err := activeProxyBackend()
+				Expect(err).NotTo(HaveOccurred())
+
+				return backend != oldBackend
+			}, 5*time.Minute, 20*time.Second).Should(BeTrue())
 		})
 
-		By("Read both values from instance[0]", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI[0])
-			assertReadFromDB(secondKey, secondValue, instanceURI[0])
+		By("Write a second key-value pair to instance", func() {
+			assertWriteToDB(secondKey, secondValue, instanceURI)
 		})
 
-		// Perform broker failover
-		fmt.Println("BROKER FAILOVER")
-
-		By("Take down first broker instance", func() {
-			partition.On(broker0SshTunnel, helpers.TestConfig.Brokers[0].Ip)
-		})
-
-		By("Sleep to let route-registrar prune broker", func() {
-			time.Sleep(routeRegistrarPruneSleepDuration)
-		})
-
-		By("Creating service instance[1]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[1]), helpers.TestContext.LongTimeout()).Run()
-		})
-
-		By("Binding app to instance[1]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[1]), helpers.TestContext.LongTimeout()).Run()
-		})
-
-		By("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), helpers.TestContext.LongTimeout()).Run()
-			assertAppIsRunning(appName)
-		})
-
-		By("Write a key-value pair to DB", func() {
-			assertWriteToDB(firstKey, firstValue, instanceURI[1])
-		})
-
-		By("Read value from DB", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI[1])
-		})
-
-		By("Bring back first broker instance", func() {
-			partition.Off(broker0SshTunnel)
-		})
-
-		By("Take down second broker instance", func() {
-			partition.On(broker1SshTunnel, helpers.TestConfig.Brokers[1].Ip)
-		})
-
-		By("Sleep to let route-registrar prune broker", func() {
-			time.Sleep(routeRegistrarPruneSleepDuration)
-		})
-
-		By("Creating service instance[2]", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName[2]), helpers.TestContext.LongTimeout()).Run()
-		})
-
-		By("Binding app to instance[2]", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName[2]), helpers.TestContext.LongTimeout()).Run()
-		})
-
-		By("Restart App to receive updated service instance info", func() {
-			runner.NewCmdRunner(Cf("restart", appName), helpers.TestContext.LongTimeout()).Run()
-			assertAppIsRunning(appName)
-		})
-
-		By("Write a second key-value pair to DB", func() {
-			assertWriteToDB(secondKey, secondValue, instanceURI[2])
-		})
-
-		By("Read values from both bindings' DBs", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI[1])
-			assertReadFromDB(secondKey, secondValue, instanceURI[2])
-		})
-
-		By("Bring back second broker instance", func() {
-			partition.Off(broker1SshTunnel)
+		By("Read both values from instance", func() {
+			assertReadFromDB(firstKey, firstValue, instanceURI)
+			assertReadFromDB(secondKey, secondValue, instanceURI)
 		})
 	})
 })

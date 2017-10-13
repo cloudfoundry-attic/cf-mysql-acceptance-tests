@@ -40,6 +40,7 @@ type Tuning struct {
 
 type MysqlIntegrationConfig struct {
 	services.Config
+	BOSH           BOSH        `json:"bosh"`
 	BrokerHost     string      `json:"broker_host,omitempty"`
 	BrokerProtocol string      `json:"broker_protocol,omitempty"`
 	ServiceName    string      `json:"service_name"`
@@ -51,6 +52,13 @@ type MysqlIntegrationConfig struct {
 	Standalone     Standalone  `json:"standalone,omitempty"`
 	StandaloneOnly bool        `json:"standalone_only,omitempty"`
 	Tuning         Tuning      `json:"tuning,omitempty"`
+}
+
+type BOSH struct {
+	CACert string `json:"ca_cert"`
+	Client string `json:"client"`
+	ClientSecret string `json:"client_secret"`
+	URL string `json:"url"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {

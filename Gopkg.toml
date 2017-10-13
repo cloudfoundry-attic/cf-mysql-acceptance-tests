@@ -44,3 +44,7 @@
 [[constraint]]
   branch = "v2"
   name = "gopkg.in/yaml.v2"
+
+[[constraint]]
+  name = "github.com/cheggaaa/pb"
+  revision = "c1f48d5ce4f292dfb775ef52aaedd15be323510d"
