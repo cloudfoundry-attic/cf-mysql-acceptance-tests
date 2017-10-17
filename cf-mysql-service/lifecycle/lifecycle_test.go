@@ -5,13 +5,14 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/onsi/gomega/gbytes"
+	. "github.com/onsi/gomega/gexec"
+
+	"os"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
-	"os"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/workflowhelpers"
 )
 
 var _ = Describe("P-MySQL Lifecycle Tests", func() {
@@ -19,12 +20,13 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	var springPath = "../../assets/cipher_finder"
 
 	var enableServiceAccessToOrg func(string, string)
-	var assertAppIsRunning func(string)
-	var createBindAndStartApp func(string, string, string, string)
+	var createBindAndStartApp func(string, string, string, string, helpers.Pinger)
 	var cleanupServiceInstance func(string, string)
 
 	It("Lists all public plans in cf marketplace", func() {
-		marketplaceCmd := runner.NewCmdRunner(Cf("m"), helpers.TestContext.LongTimeout()).Run()
+		marketplaceCmd := cf.Cf("m").Wait(helpers.TestContext.LongTimeout())
+		Expect(marketplaceCmd).To(Exit(0))
+
 		marketplaceOutput := marketplaceCmd.Out.Contents()
 		for _, plan := range helpers.TestConfig.Plans {
 			if plan.Private == false {
@@ -34,7 +36,9 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	})
 
 	It("Does not list any private plans in cf marketplace", func() {
-		marketplaceCmd := runner.NewCmdRunner(Cf("m"), helpers.TestContext.LongTimeout()).Run()
+		marketplaceCmd := cf.Cf("m").Wait(helpers.TestContext.LongTimeout())
+		Expect(marketplaceCmd).To(Exit(0))
+
 		marketplaceOutput := marketplaceCmd.Out.Contents()
 		for _, plan := range helpers.TestConfig.Plans {
 			if plan.Private == true {
@@ -46,10 +50,12 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	Describe("When pushing an app", func() {
 		var appName, serviceInstanceName string
 		var plan helpers.Plan
+		var sinatraAppClient helpers.SinatraAppClient
+		var cipherFinderAppClient helpers.CipherFinderClient
 
 		BeforeEach(func() {
-			appName = RandomName()
-			serviceInstanceName = RandomName()
+			appName = generator.PrefixedRandomName("lifecycle", "")
+			serviceInstanceName = generator.PrefixedRandomName("lifecycle", "")
 
 			if len(helpers.TestConfig.Plans) > 0 {
 				plan = helpers.TestConfig.Plans[0]
@@ -58,6 +64,8 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			}
 
 			enableServiceAccessToOrg(helpers.TestConfig.ServiceName, helpers.TestContext.RegularUserContext().Org)
+			sinatraAppClient = helpers.NewSinatraAppClient(helpers.TestConfig.AppURI(appName), serviceInstanceName, helpers.TestConfig.CFConfig.SkipSSLValidation)
+			cipherFinderAppClient = helpers.NewCipherFinderClient(helpers.TestConfig.AppURI(appName), helpers.TestConfig.CFConfig.SkipSSLValidation)
 		})
 
 		AfterEach(func() {
@@ -65,20 +73,21 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		})
 
 		It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
-			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.AppsDomain, "-no-start"), helpers.TestContext.LongTimeout()).Run()
-			Expect(pushCmd).To(Say("OK"))
+			Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.CFConfig.AppsDomain, "-no-start").
+				Wait(helpers.TestContext.LongTimeout())).
+				To(Exit(0))
 
-			uri := fmt.Sprintf("%s/service/mysql/%s/mykey", helpers.TestConfig.AppURI(appName), serviceInstanceName)
+			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName, sinatraAppClient)
 
-			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
+			fmt.Printf("\n*** Posting to app\n")
+			msg, err := sinatraAppClient.Set("mykey", "myvalue")
+			Expect(msg).To(ContainSubstring("myvalue"))
+			Expect(err).NotTo(HaveOccurred())
 
-			fmt.Printf("\n*** Posting to url: %s\n", uri)
-			curlCmd := runner.NewCmdRunner(runner.Curl("-k", "-d", "myvalue", uri), helpers.TestContext.ShortTimeout()).Run()
-			Expect(curlCmd).To(Say("myvalue"))
-
-			fmt.Printf("\n*** Curling url: %s\n", uri)
-			curlCmd = runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
-			Expect(curlCmd).To(Say("myvalue"))
+			fmt.Printf("\n*** Curling app\n")
+			msg, err = sinatraAppClient.Get("mykey")
+			Expect(msg).To(ContainSubstring("myvalue"))
+			Expect(err).NotTo(HaveOccurred())
 		})
 
 		It("Guarantees a TLS connection to a simple Spring app", func() {
@@ -90,46 +99,38 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			os.Link("/var/vcap/packages/acceptance-tests/cipher_finder/cipher_finder.jar", fmt.Sprintf("%s/build/libs/cipher_finder.jar", springPath))
 
 			// cf push cipher-finder -no-start
-			pushCmd := runner.NewCmdRunner(Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.AppsDomain, "-b", "java_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
-			Expect(pushCmd).To(Say("OK"))
+			Expect(cf.Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.CFConfig.AppsDomain, "-b", "java_buildpack", "-no-start").
+				Wait(helpers.TestContext.LongTimeout())).
+				To(Exit(0))
 
 			// create-service & bind-service & start & assertAppIsRunning
-			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName)
+			createBindAndStartApp(helpers.TestConfig.ServiceName, plan.Name, serviceInstanceName, appName, cipherFinderAppClient)
 
-			// curl app on only endpoint to return active connection's cipher
-			uri := fmt.Sprintf("%s/ciphers", helpers.TestConfig.AppURI(appName))
-			fmt.Printf("\n*** GET curl to url: %s\n", uri)
-			curlCmd := runner.NewCmdRunner(runner.Curl("-k", uri), helpers.TestContext.ShortTimeout()).Run()
-			Expect(curlCmd).To(Say(`{"cipher_used":"([^"]+)"}`))
+			fmt.Printf("\n*** GET curl to url\n")
+			cipher, err := cipherFinderAppClient.Ciphers()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(cipher).NotTo(BeEmpty())
 		})
+
+		enableServiceAccessToOrg = func(serviceName string, org string) {
+			workflowhelpers.AsUser(helpers.TestContext.AdminUserContext(), helpers.TestContext.ShortTimeout(), func() {
+				cf.Cf("enable-service-access", serviceName, "-o", org).Wait(helpers.TestContext.ShortTimeout())
+			})
+		}
+
+		createBindAndStartApp = func(serviceName string, planName string, serviceInstanceName string, appName string, appClient helpers.Pinger) {
+			cf.Cf("create-service", serviceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
+			cf.Cf("bind-service", appName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
+			cf.Cf("start", appName).Wait(helpers.TestContext.LongTimeout())
+			err := appClient.Ping()
+			Expect(err).NotTo(HaveOccurred())
+		}
+
+		cleanupServiceInstance = func(appName string, serviceInstanceName string) {
+			cf.Cf("unbind-service", appName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
+			cf.Cf("delete-service", "-f", serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
+
+			cf.Cf("delete", appName, "-f").Wait(helpers.TestContext.LongTimeout())
+		}
 	})
-
-	enableServiceAccessToOrg = func(serviceName string, org string) {
-		AsUser(helpers.TestContext.AdminUserContext(), helpers.TestContext.ShortTimeout(), func() {
-			runner.NewCmdRunner(Cf("enable-service-access", serviceName, "-o", org), helpers.TestContext.ShortTimeout()).Run()
-		})
-	}
-
-	createBindAndStartApp = func(serviceName string, planName string, serviceInstanceName string, appName string) {
-		runner.NewCmdRunner(Cf("create-service", serviceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-
-		runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-		runner.NewCmdRunner(Cf("start", appName), helpers.TestContext.LongTimeout()).Run()
-		assertAppIsRunning(appName)
-
-	}
-
-	assertAppIsRunning = func(appName string) {
-		pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
-		fmt.Println("\n*** Checking that the app is responding at url: ", pingURI)
-
-		runner.NewCmdRunner(runner.Curl("-k", pingURI), helpers.TestContext.ShortTimeout()).WithAttempts(3).WithOutput("OK").Run()
-	}
-
-	cleanupServiceInstance = func(appName string, serviceInstanceName string) {
-		runner.NewCmdRunner(Cf("unbind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-
-		runner.NewCmdRunner(Cf("delete", appName, "-f"), helpers.TestContext.LongTimeout()).Run()
-	}
 })

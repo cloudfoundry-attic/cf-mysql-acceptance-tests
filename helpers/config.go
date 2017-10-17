@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cloudfoundry-incubator/cf-test-helpers/services"
+	"encoding/json"
+	"io/ioutil"
+
+	"github.com/cloudfoundry-incubator/cf-test-helpers/config"
 )
 
 type Component struct {
@@ -39,7 +42,7 @@ type Tuning struct {
 }
 
 type MysqlIntegrationConfig struct {
-	services.Config
+	CFConfig       *config.Config
 	BOSH           BOSH        `json:"bosh"`
 	BrokerHost     string      `json:"broker_host,omitempty"`
 	BrokerProtocol string      `json:"broker_protocol,omitempty"`
@@ -55,34 +58,48 @@ type MysqlIntegrationConfig struct {
 }
 
 type BOSH struct {
-	CACert string `json:"ca_cert"`
-	Client string `json:"client"`
+	CACert       string `json:"ca_cert"`
+	Client       string `json:"client"`
 	ClientSecret string `json:"client_secret"`
-	URL string `json:"url"`
+	URL          string `json:"url"`
 }
 
 func (c MysqlIntegrationConfig) AppURI(appname string) string {
-	return "https://" + appname + "." + c.AppsDomain
+	return "https://" + appname + "." + c.CFConfig.AppsDomain
 }
 
 func LoadConfig() (MysqlIntegrationConfig, error) {
-	config := MysqlIntegrationConfig{}
+	mysqlIntegrationConfig := MysqlIntegrationConfig{}
 
 	path := os.Getenv("CONFIG")
 	if path == "" {
-		return config, fmt.Errorf("Must set $CONFIG to point to an integration config .json file.")
+		return mysqlIntegrationConfig, fmt.Errorf("Must set $CONFIG to point to an integration config .json file.")
 	}
 
-	err := services.LoadConfig(path, &config)
+	cfConfig := &config.Config{
+		NamePrefix: "MySQLATS",
+	}
+	err := config.Load(path, cfConfig)
 	if err != nil {
-		return config, fmt.Errorf("Loading config: %s", err.Error())
+		return mysqlIntegrationConfig, fmt.Errorf("Loading config: %s", err.Error())
 	}
 
-	if config.BrokerProtocol == "" {
-		config.BrokerProtocol = "https"
+	buf, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
 	}
 
-	return config, nil
+	if err := json.Unmarshal(buf, &mysqlIntegrationConfig); err != nil {
+		panic(err)
+	}
+
+	mysqlIntegrationConfig.CFConfig = cfConfig
+
+	if mysqlIntegrationConfig.BrokerProtocol == "" {
+		mysqlIntegrationConfig.BrokerProtocol = "https"
+	}
+
+	return mysqlIntegrationConfig, nil
 }
 
 func ValidateConfig(config *MysqlIntegrationConfig) error {
@@ -104,11 +121,6 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 		}
 
 		return nil
-	}
-
-	err := services.ValidateConfig(&config.Config)
-	if err != nil {
-		return err
 	}
 
 	if config.ServiceName == "" {
