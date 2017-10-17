@@ -10,13 +10,12 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega/gexec"
 
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-
-	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
@@ -32,21 +31,6 @@ const (
 
 	sinatraPath = "../../assets/sinatra_app"
 )
-
-func assertAppIsRunning(appName string) {
-	pingURI := helpers.TestConfig.AppURI(appName) + "/ping"
-	runner.NewCmdRunner(runner.Curl("-k", pingURI), helpers.TestContext.ShortTimeout()).WithOutput("OK").Run()
-}
-
-func assertWriteToDB(key, value, uri string) {
-	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-d", value, "-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
-}
-
-func assertReadFromDB(key, value, uri string) {
-	curlURI := fmt.Sprintf("%s/%s", uri, key)
-	runner.NewCmdRunner(runner.Curl("-k", curlURI), helpers.TestContext.ShortTimeout()).WithOutput(value).Run()
-}
 
 func deleteMysqlVM(host string) error {
 	logger := boshlog.NewLogger(boshlog.LevelError)
@@ -131,39 +115,34 @@ var _ = Describe("CF MySQL Failover", func() {
 	It("write/read data before and after a partition of mysql node", func() {
 		var oldBackend string
 
-		serviceInstanceName := generator.RandomName()
-		appName := generator.RandomName()
-		instanceURI := helpers.TestConfig.AppURI(appName) + "/service/mysql/" + serviceInstanceName
+		serviceInstanceName := generator.PrefixedRandomName("failover", "")
+		appName := generator.PrefixedRandomName("failover", "")
 
-		runner.NewCmdRunner(Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start"), helpers.TestContext.LongTimeout()).Run()
+		var appClient = helpers.NewSinatraAppClient(helpers.TestConfig.AppURI(appName), serviceInstanceName, helpers.TestConfig.CFConfig.SkipSSLValidation)
 
-		By("Creating service instance", func() {
-			runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-		})
+		Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start").
+			Wait(helpers.TestContext.LongTimeout())).
+			To(Exit(0))
 
-		By("Binding app to instance", func() {
-			runner.NewCmdRunner(Cf("bind-service", appName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
-		})
+		Expect(cf.Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
+		Expect(cf.Cf("bind-service", appName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
+		Expect(cf.Cf("start", appName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
+		err := appClient.Ping()
+		Expect(err).NotTo(HaveOccurred())
 
-		By("Start app for the first time", func() {
-			runner.NewCmdRunner(Cf("start", appName), helpers.TestContext.LongTimeout()).Run()
-			assertAppIsRunning(appName)
-		})
+		msg, err := appClient.Set(firstKey, firstValue)
+		Expect(msg).To(ContainSubstring(firstValue))
+		Expect(err).NotTo(HaveOccurred())
 
-		By("Write a key-value pair to instance", func() {
-			assertWriteToDB(firstKey, firstValue, instanceURI)
-		})
-
-		By("Read value from instance", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI)
-		})
+		msg, err = appClient.Get(firstKey)
+		Expect(msg).To(ContainSubstring(firstValue))
+		Expect(err).NotTo(HaveOccurred())
 
 		By("querying the proxy for the current mysql backend", func() {
 			var err error
 
 			oldBackend, err = activeProxyBackend()
 			Expect(err).NotTo(HaveOccurred())
-
 		})
 
 		By("Take down the active mysql node", func() {
@@ -181,13 +160,16 @@ var _ = Describe("CF MySQL Failover", func() {
 			}, 5*time.Minute, 20*time.Second).Should(BeTrue())
 		})
 
-		By("Write a second key-value pair to instance", func() {
-			assertWriteToDB(secondKey, secondValue, instanceURI)
-		})
+		msg, err = appClient.Set(secondKey, secondValue)
+		Expect(msg).To(ContainSubstring(secondValue))
+		Expect(err).NotTo(HaveOccurred())
 
-		By("Read both values from instance", func() {
-			assertReadFromDB(firstKey, firstValue, instanceURI)
-			assertReadFromDB(secondKey, secondValue, instanceURI)
-		})
+		msg, err = appClient.Get(firstKey)
+		Expect(msg).To(ContainSubstring(firstValue))
+		Expect(err).NotTo(HaveOccurred())
+
+		msg, err = appClient.Get(secondKey)
+		Expect(msg).To(ContainSubstring(secondValue))
+		Expect(err).NotTo(HaveOccurred())
 	})
 })

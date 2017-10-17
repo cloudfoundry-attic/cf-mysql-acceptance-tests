@@ -8,9 +8,8 @@ import (
 	. "github.com/sclevine/agouti"
 	. "github.com/sclevine/agouti/matchers"
 
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/cf"
-	. "github.com/cloudfoundry-incubator/cf-test-helpers/generator"
-	"github.com/cloudfoundry-incubator/cf-test-helpers/runner"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
+	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
 	"fmt"
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
@@ -44,15 +43,14 @@ var _ = Describe("CF Mysql Dashboard", func() {
 		page, err = driver.NewPage()
 		Expect(err).ToNot(HaveOccurred())
 
-		serviceInstanceName = RandomName()
+		serviceInstanceName = generator.PrefixedRandomName("dashboard", "")
 		planName := helpers.TestConfig.Plans[0].Name
 
-		By("Creating service")
-		runner.NewCmdRunner(Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+		cf.Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
 
 		By("Verifing service instance exists")
 		var serviceInstanceInfo map[string]interface{}
-		serviceInfoCmd := runner.NewCmdRunner(Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName), helpers.TestContext.ShortTimeout()).Run()
+		serviceInfoCmd := cf.Cf("curl", "/v2/service_instances?q=name:"+serviceInstanceName).Wait(helpers.TestContext.ShortTimeout())
 		err = json.Unmarshal(serviceInfoCmd.Buffer().Contents(), &serviceInstanceInfo)
 		Expect(err).ShouldNot(HaveOccurred())
 
@@ -73,7 +71,7 @@ var _ = Describe("CF Mysql Dashboard", func() {
 		}()
 		Eventually(driverStopped).Should(Receive())
 
-		runner.NewCmdRunner(Cf("delete-service", "-f", serviceInstanceName), helpers.TestContext.LongTimeout()).Run()
+		cf.Cf("delete-service", "-f", serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
 	})
 
 	It("Login via dashboard url", func() {

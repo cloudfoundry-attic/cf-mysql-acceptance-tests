@@ -25,9 +25,10 @@
   revision = "c1f48d5ce4f292dfb775ef52aaedd15be323510d"
 
 [[projects]]
+  branch = "master"
   name = "github.com/cloudfoundry-incubator/cf-test-helpers"
-  packages = ["cf","generator","runner","services"]
-  revision = "135579ed3e53d6ac04cb14e1f6e2b302a0212509"
+  packages = ["cf","commandreporter","commandstarter","config","generator","helpers","helpers/internal","internal","workflowhelpers","workflowhelpers/internal"]
+  revision = "820a007a30e27f0a63666254fc19d1198536eb33"
 
 [[projects]]
   name = "github.com/cloudfoundry/bosh-cli"
@@ -145,6 +146,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5aae6d779486fc329581ec44b955be520cff0a1242ad52b289055af025aa1d2a"
+  inputs-digest = "241a8a6b3548ea30990bcb5b570985b82a9e2c56221b58763e74e7a245130e8a"
   solver-name = "gps-cdcl"
   solver-version = 1
