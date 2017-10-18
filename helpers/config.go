@@ -76,14 +76,6 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 		return mysqlIntegrationConfig, fmt.Errorf("Must set $CONFIG to point to an integration config .json file.")
 	}
 
-	cfConfig := &config.Config{
-		NamePrefix: "MySQLATS",
-	}
-	err := config.Load(path, cfConfig)
-	if err != nil {
-		return mysqlIntegrationConfig, fmt.Errorf("Loading config: %s", err.Error())
-	}
-
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -93,7 +85,17 @@ func LoadConfig() (MysqlIntegrationConfig, error) {
 		panic(err)
 	}
 
-	mysqlIntegrationConfig.CFConfig = cfConfig
+	cfConfig := &config.Config{
+		NamePrefix: "MySQLATS",
+	}
+	if !mysqlIntegrationConfig.StandaloneOnly {
+		err = config.Load(path, cfConfig)
+		if err != nil {
+			return mysqlIntegrationConfig, fmt.Errorf("Loading config: %s", err.Error())
+		}
+		mysqlIntegrationConfig.CFConfig = cfConfig
+	}
+
 
 	if mysqlIntegrationConfig.BrokerProtocol == "" {
 		mysqlIntegrationConfig.BrokerProtocol = "https"

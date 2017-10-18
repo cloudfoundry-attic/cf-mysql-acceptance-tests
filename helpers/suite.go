@@ -27,10 +27,15 @@ func PrepareAndRunTests(packageName string, t *testing.T, withContext bool) {
 		panic("Validating config: " + err.Error())
 	}
 
-	TestContext = workflowhelpers.NewTestSuiteSetup(TestConfig.CFConfig)
 	if withContext {
-		BeforeEach(TestContext.Setup)
-		AfterEach(TestContext.Teardown)
+		BeforeEach(func() {
+			TestContext = workflowhelpers.NewTestSuiteSetup(TestConfig.CFConfig)
+			TestContext.Setup()
+		})
+
+		AfterEach(func() {
+			TestContext.Teardown()
+		})
 	}
 
 	RegisterFailHandler(Fail)
