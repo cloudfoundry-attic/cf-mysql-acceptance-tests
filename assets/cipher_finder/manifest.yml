@@ -1,5 +1,4 @@
 ---
 applications:
 - name: cipher_finder_test
-  buildpack: java_buildpack
   path: build/libs/cipher_finder.jar

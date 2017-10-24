@@ -99,7 +99,7 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			os.Link("/var/vcap/packages/acceptance-tests/cipher_finder/cipher_finder.jar", fmt.Sprintf("%s/build/libs/cipher_finder.jar", springPath))
 
 			// cf push cipher-finder -no-start
-			Expect(cf.Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.CFConfig.AppsDomain, "-b", "java_buildpack", "-no-start").
+			Expect(cf.Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.CFConfig.AppsDomain, "-no-start").
 				Wait(helpers.TestContext.LongTimeout())).
 				To(Exit(0))
 
