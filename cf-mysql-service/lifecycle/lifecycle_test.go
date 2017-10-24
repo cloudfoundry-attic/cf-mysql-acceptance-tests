@@ -119,9 +119,9 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		}
 
 		createBindAndStartApp = func(serviceName string, planName string, serviceInstanceName string, appName string, appClient helpers.Pinger) {
-			cf.Cf("create-service", serviceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
-			cf.Cf("bind-service", appName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
-			cf.Cf("start", appName).Wait(helpers.TestContext.LongTimeout())
+			Expect(cf.Cf("create-service", serviceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
+			Expect(cf.Cf("bind-service", appName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
+			Expect(cf.Cf("start", appName).Wait(helpers.TestContext.LongTimeout())).To(Exit(0))
 			err := appClient.Ping()
 			Expect(err).NotTo(HaveOccurred())
 		}
