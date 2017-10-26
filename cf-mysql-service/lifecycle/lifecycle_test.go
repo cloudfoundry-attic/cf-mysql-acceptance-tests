@@ -36,6 +36,10 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 	})
 
 	It("Does not list any private plans in cf marketplace", func() {
+		if helpers.TestConfig.CFConfig.UseExistingOrganization {
+			Skip("Skipping private plan test due to use of existing org")
+		}
+
 		marketplaceCmd := cf.Cf("m").Wait(helpers.TestContext.LongTimeout())
 		Expect(marketplaceCmd).To(Exit(0))
 
