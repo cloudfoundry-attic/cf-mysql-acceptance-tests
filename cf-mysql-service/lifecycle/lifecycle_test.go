@@ -113,7 +113,7 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			fmt.Printf("\n*** GET curl to url\n")
 			cipher, err := cipherFinderAppClient.Ciphers()
 			Expect(err).NotTo(HaveOccurred())
-			Expect(cipher).NotTo(BeEmpty())
+			Expect(cipher).To(Equal("AES256-SHA256"))
 		})
 
 		enableServiceAccessToOrg = func(serviceName string, org string) {
