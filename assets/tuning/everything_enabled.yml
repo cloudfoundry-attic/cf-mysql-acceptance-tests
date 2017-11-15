@@ -132,6 +132,10 @@
   value: ((cf_mysql_mysql_tls_server_certificate.private_key))
 
 - type: replace
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/long_query_time?
+  value: 20
+
+- type: replace
   path: /variables/-
   value:
     name: cf_mysql_mysql_tls_ca_certificate

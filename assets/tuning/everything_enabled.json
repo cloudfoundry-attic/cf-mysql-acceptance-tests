@@ -31,5 +31,6 @@
   "event_scheduler": "ON",
   "local_infile": "ON",
   "ssl_cert": "/var/vcap/jobs/mysql/certificates/server-cert.pem",
-  "ssl_key": "/var/vcap/jobs/mysql/certificates/server-key.pem"
+  "ssl_key": "/var/vcap/jobs/mysql/certificates/server-key.pem",
+  "long_query_time": "20"
 }
