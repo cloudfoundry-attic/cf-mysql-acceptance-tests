@@ -111,13 +111,13 @@
   branch = "master"
   name = "github.com/vito/go-interact"
   packages = ["interact","interact/terminal"]
-  revision = "c5a3f51ad50e34ec101050f69383caa75082f233"
+  revision = "fa338ed9e9ecbb0e9c2e6c7a0160d9fc9b0efbd9"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = ["ssh","ssh/terminal"]
-  revision = "bfc286917c5fcb7420d7e3092b50bbfd31b38a98"
+  packages = ["curve25519","ed25519","ed25519/internal/edwards25519","ssh","ssh/terminal"]
+  revision = "9f005a07e0d31d45e6656d241bb5c0f2efd4bc94"
 
 [[projects]]
   branch = "master"
@@ -128,8 +128,8 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = ["unix"]
-  revision = "cd2c276457edda6df7fb04895d3fd6a6add42926"
+  packages = ["unix","windows"]
+  revision = "bf42f188b9bc6f2cf5b8ee5a912ef1aedd0eba4c"
 
 [[projects]]
   branch = "master"
