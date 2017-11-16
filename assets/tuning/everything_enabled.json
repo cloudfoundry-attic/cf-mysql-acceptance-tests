@@ -32,5 +32,5 @@
   "local_infile": "ON",
   "ssl_cert": "/var/vcap/jobs/mysql/certificates/server-cert.pem",
   "ssl_key": "/var/vcap/jobs/mysql/certificates/server-key.pem",
-  "long_query_time": "20"
+  "long_query_time": "20.000000"
 }
