@@ -49,3 +49,7 @@
 - type: replace
   path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/enable_galera?
   value: false
+
+- type: replace
+  path: /instance_groups/name=mysql/jobs/name=mysql/properties/cf_mysql/mysql/enable_local_file?
+  value: false

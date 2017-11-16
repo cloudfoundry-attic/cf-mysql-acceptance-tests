@@ -5,6 +5,7 @@
   "server_audit_events": "",
   "server_audit_logging": "",
   "server_audit_excl_users": "",
+  "local_infile": "OFF",
   "log_bin": "OFF",
   "expire_logs_days": "0",
   "wsrep_on": "OFF",
