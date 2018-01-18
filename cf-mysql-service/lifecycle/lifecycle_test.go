@@ -77,7 +77,7 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		})
 
 		It("Allows users to create, bind, write to, read from, unbind, and destroy a service instance for the each plan", func() {
-			Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.CFConfig.AppsDomain, "-no-start").
+			Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-d", helpers.TestConfig.CFConfig.AppsDomain, "--no-start").
 				Wait(helpers.TestContext.LongTimeout())).
 				To(Exit(0))
 
@@ -102,8 +102,8 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 			os.MkdirAll(fmt.Sprintf("%s/build/libs/", springPath), 0700)
 			os.Link("/var/vcap/packages/acceptance-tests/cipher_finder/cipher_finder.jar", fmt.Sprintf("%s/build/libs/cipher_finder.jar", springPath))
 
-			// cf push cipher-finder -no-start
-			Expect(cf.Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.CFConfig.AppsDomain, "-no-start").
+			// cf push cipher-finder --no-start
+			Expect(cf.Cf("push", appName, "-m", "1G", "-f", fmt.Sprintf("%s/manifest.yml", springPath), "-d", helpers.TestConfig.CFConfig.AppsDomain, "--no-start").
 				Wait(helpers.TestContext.LongTimeout())).
 				To(Exit(0))
 

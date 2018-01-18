@@ -120,7 +120,7 @@ var _ = Describe("CF MySQL Failover", func() {
 
 		var appClient = helpers.NewSinatraAppClient(helpers.TestConfig.AppURI(appName), serviceInstanceName, helpers.TestConfig.CFConfig.SkipSSLValidation)
 
-		Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "-no-start").
+		Expect(cf.Cf("push", appName, "-m", "256M", "-p", sinatraPath, "-b", "ruby_buildpack", "--no-start").
 			Wait(helpers.TestContext.LongTimeout())).
 			To(Exit(0))
 
