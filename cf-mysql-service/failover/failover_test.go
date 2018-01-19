@@ -115,8 +115,8 @@ var _ = Describe("CF MySQL Failover", func() {
 	It("write/read data before and after a partition of mysql node", func() {
 		var oldBackend string
 
-		serviceInstanceName := generator.PrefixedRandomName("failover", "")
-		appName := generator.PrefixedRandomName("failover", "")
+		serviceInstanceName := generator.PrefixedRandomName("failover", "instance")
+		appName := generator.PrefixedRandomName("failover", "app")
 
 		var appClient = helpers.NewSinatraAppClient(helpers.TestConfig.AppURI(appName), serviceInstanceName, helpers.TestConfig.CFConfig.SkipSSLValidation)
 

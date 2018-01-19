@@ -85,8 +85,8 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 
 			fmt.Printf("\n*** Posting to app\n")
 			msg, err := sinatraAppClient.Set("mykey", "myvalue")
-			Expect(msg).To(ContainSubstring("myvalue"))
 			Expect(err).NotTo(HaveOccurred())
+			Expect(msg).To(ContainSubstring("myvalue"))
 
 			fmt.Printf("\n*** Curling app\n")
 			msg, err = sinatraAppClient.Get("mykey")
