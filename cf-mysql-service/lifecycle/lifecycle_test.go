@@ -58,8 +58,8 @@ var _ = Describe("P-MySQL Lifecycle Tests", func() {
 		var cipherFinderAppClient helpers.CipherFinderClient
 
 		BeforeEach(func() {
-			appName = generator.PrefixedRandomName("lifecycle", "")
-			serviceInstanceName = generator.PrefixedRandomName("lifecycle", "")
+			appName = generator.PrefixedRandomName("lifecycle", "app")
+			serviceInstanceName = generator.PrefixedRandomName("lifecycle", "instance")
 
 			if len(helpers.TestConfig.Plans) > 0 {
 				plan = helpers.TestConfig.Plans[0]

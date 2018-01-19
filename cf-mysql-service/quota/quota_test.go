@@ -31,8 +31,8 @@ var _ = Describe("P-MySQL Service", func() {
 		var appClient helpers.SinatraAppClient
 
 		BeforeEach(func() {
-			appName = generator.PrefixedRandomName("quota", "")
-			serviceInstanceName = generator.PrefixedRandomName("quota", "")
+			appName = generator.PrefixedRandomName("quota", "app")
+			serviceInstanceName = generator.PrefixedRandomName("quota", "instance")
 			plan = helpers.TestConfig.Plans[0]
 			appClient = helpers.NewSinatraAppClient(helpers.TestConfig.AppURI(appName), serviceInstanceName, helpers.TestConfig.CFConfig.SkipSSLValidation)
 

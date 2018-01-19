@@ -43,7 +43,7 @@ var _ = Describe("CF Mysql Dashboard", func() {
 		page, err = driver.NewPage()
 		Expect(err).ToNot(HaveOccurred())
 
-		serviceInstanceName = generator.PrefixedRandomName("dashboard", "")
+		serviceInstanceName = generator.PrefixedRandomName("dashboard", "instance")
 		planName := helpers.TestConfig.Plans[0].Name
 
 		cf.Cf("create-service", helpers.TestConfig.ServiceName, planName, serviceInstanceName).Wait(helpers.TestContext.LongTimeout())
