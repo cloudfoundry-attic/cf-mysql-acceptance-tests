@@ -14,6 +14,7 @@ import (
 
 	"github.com/cloudfoundry-incubator/cf-test-helpers/cf"
 
+	boshuaa "github.com/cloudfoundry/bosh-cli/uaa"
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
 
@@ -32,20 +33,57 @@ const (
 	sinatraPath = "../../assets/sinatra_app"
 )
 
-func deleteMysqlVM(host string) error {
+func buildUAA() (boshuaa.UAA, error) {
+	logger := boshlog.NewLogger(boshlog.LevelError)
+	factory := boshuaa.NewFactory(logger)
+
+	// Build a UAA config from a URL.
+	// HTTPS is required and certificates are always verified.
+	config, err := boshuaa.NewConfigFromURL(fmt.Sprintf("https://%s:8443", helpers.TestConfig.BOSH.URL))
+	if err != nil {
+		return nil, err
+	}
+
+	// Set client credentials for authentication.
+	// Machine level access should typically use a client instead of a particular user.
+	config.Client = helpers.TestConfig.BOSH.Client
+	config.ClientSecret = helpers.TestConfig.BOSH.ClientSecret
+
+	// Configure trusted CA certificates.
+	// If nothing is provided default system certificates are used.
+	config.CACert = helpers.TestConfig.BOSH.CACert
+
+	return factory.New(config)
+}
+
+func buildDirector(uaa boshuaa.UAA) (boshdir.Director, error) {
 	logger := boshlog.NewLogger(boshlog.LevelError)
 	factory := boshdir.NewFactory(logger)
 
+	// Build a Director config from address-like string.
+	// HTTPS is required and certificates are always verified.
 	config, err := boshdir.NewConfigFromURL(helpers.TestConfig.BOSH.URL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Configure custom trusted CA certificates.
+	// If nothing is provided default system certificates are used.
+	config.CACert = helpers.TestConfig.BOSH.CACert
+
+	// Allow Director to fetch UAA tokens when necessary.
+	config.TokenFunc = boshuaa.NewClientTokenSession(uaa).TokenFunc
+
+	return factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
+}
+
+func deleteMysqlVM(host string) error {
+	uaa, err := buildUAA()
 	if err != nil {
 		return err
 	}
 
-	config.CACert = helpers.TestConfig.BOSH.CACert
-	config.Client = helpers.TestConfig.BOSH.Client
-	config.ClientSecret = helpers.TestConfig.BOSH.ClientSecret
-
-	director, err := factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
+	director, err := buildDirector(uaa)
 	if err != nil {
 		return err
 	}
