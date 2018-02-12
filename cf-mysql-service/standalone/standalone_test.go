@@ -3,6 +3,7 @@ package standalone_test
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/ginkgo"
@@ -44,7 +45,7 @@ var _ = Describe("MySQL Standalone Deployment", func() {
 	It("writes data to test DB and reads it back", func() {
 
 		_, err := db.Query(fmt.Sprintf(
-			"CREATE TABLE %s.testTable (id int,name varchar(250))", dbName))
+			"CREATE TABLE %s.testTable (id int,name varchar(250), PRIMARY KEY (id))", dbName))
 		Expect(err).ToNot(HaveOccurred())
 
 		expectedId := 42
