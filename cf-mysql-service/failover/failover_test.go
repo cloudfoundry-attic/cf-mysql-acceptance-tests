@@ -21,6 +21,7 @@ import (
 	"github.com/cloudfoundry-incubator/cf-test-helpers/generator"
 
 	"github.com/cloudfoundry-incubator/cf-mysql-acceptance-tests/helpers"
+	"strings"
 )
 
 const (
@@ -100,9 +101,12 @@ func deleteMysqlVM(host string) error {
 
 	var vmcid string
 	for _, instance := range instances {
-		if instance.Group == "mysql" && instance.IPs[0] == host {
-			vmcid = instance.VMID
-			break
+		if instance.Group == "mysql" {
+			hostArray := strings.Split(host, ".")
+			if instance.IPs[0] == host || (len(hostArray) > 0 && hostArray[0] == instance.ID) {
+				vmcid = instance.VMID
+				break
+			}
 		}
 	}
 
