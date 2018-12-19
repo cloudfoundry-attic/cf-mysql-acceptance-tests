@@ -9,4 +9,4 @@ go install -v github.com/onsi/ginkgo/ginkgo
 
 source $MY_DIR/test-options.sh
 
-ginkgo $GINKGO_OPTS "$@" "${TEST_DIR}/standalone"
+ginkgo $GINKGO_OPTS "$@" "${TEST_DIR}/standalone/standalone.test"
