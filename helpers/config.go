@@ -133,10 +133,6 @@ func ValidateConfig(config *MysqlIntegrationConfig) error {
 		return fmt.Errorf("Field 'plans' must not be nil")
 	}
 
-	if len(config.Plans) == 0 {
-		return fmt.Errorf("Field 'plans' must not be empty")
-	}
-
 	for index, plan := range config.Plans {
 		if plan.Name == "" {
 			return fmt.Errorf("Field 'plans[%d].name' must not be empty", index)
